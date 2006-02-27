@@ -11,6 +11,7 @@
    [+] Remembers position in playlist
    [+] Playlist entry numbers
    [+] Current track highlighting
+   [+] Minimize to tray introduced (see Plainamp.ini)
    [+] Alternating row background color
    [+] Plugin Manager grid made optional (see Plainamp.ini)
    [+] Pan slider invert option introduced (see Plainamp.ini)

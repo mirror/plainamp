@@ -27,6 +27,7 @@
 #include "Winamp.h"
 #include "Winamp/wa_ipc.h"
 #include "Config.h"
+#include <shellapi.h>
 
 
 #define CLASSNAME_MAIN      TEXT( "Winamp v1.x" )
@@ -73,6 +74,10 @@ ConfWinPlaceCallback cwpcWinPlaceMain(
 	&rMainDefault,
 	WinPlaceMainCallback
 );
+
+
+bool bMinimizeToTray;
+ConfBool cbMinimizeToTray( &bMinimizeToTray, TEXT( "MinimizeToTray" ), CONF_MODE_PUBLIC, true );
 
 
 
@@ -279,6 +284,32 @@ void About( HWND hParent )
 	);
 }
 
+#define TRAY_MAIN_ID  13
+#define TRAY_MSG      ( WM_USER + 1 )
+
+
+
+NOTIFYICONDATA nid;
+
+bool AddTrayIcon( HWND hwnd )
+{
+	ZeroMemory( &nid, sizeof( NOTIFYICONDATA ) );
+	nid.cbSize            = sizeof( NOTIFYICONDATA );
+	nid.hWnd              = hwnd;
+	nid.uID               = TRAY_MAIN_ID;
+	nid.uFlags            = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	nid.uCallbackMessage  = TRAY_MSG;
+	nid.hIcon             = LoadIcon( g_hInstance, TEXT( "IDI_ICON1" ) );
+	_tcscpy( nid.szTip, TEXT( "Plainamp" ) );
+
+	return ( Shell_NotifyIcon( NIM_ADD, &nid ) != 0 );
+}
+
+void RemoveTrayIcon()
+{
+	Shell_NotifyIcon( NIM_DELETE, &nid );
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -290,9 +321,14 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 	static bool bConsoleTodo = false;
 	static bool bManagerTodo = false;
 
+	static bool bRemoveIcon = false;
+
+
+
 	switch( message )
 	{
 	case WM_CREATE:
+		// Note: [WindowMain] is not valid yet but [hwnd] is!
 		Console::Create();
 		PluginManager::Build();
 		
@@ -608,6 +644,12 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			Console::Destroy();
 			PluginManager::Destroy();
 			
+			if( bRemoveIcon )
+			{
+				RemoveTrayIcon();
+				bRemoveIcon = false;
+			}
+			
 			PostQuitMessage( 0 );
 			return 0;
 		}
@@ -646,6 +688,17 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 
 				bManagerTodo = ( IsWindowVisible( WindowManager ) == TRUE );
 				if( bManagerTodo ) ShowWindow( WindowManager, SW_HIDE );
+				
+				if( bMinimizeToTray )
+				{
+					if( !bRemoveIcon )
+					{
+						bRemoveIcon = AddTrayIcon( hwnd );
+					}
+
+					ShowWindow( hwnd, FALSE );
+					return 0;
+				}
 
 				break;
 			}
@@ -653,6 +706,13 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 		case SC_RESTORE:
 			{
 				const LRESULT res = DefWindowProc( hwnd, message, wp, lp );
+
+				if( bRemoveIcon )
+				{
+					RemoveTrayIcon();
+					bRemoveIcon = false;
+				}
+
 
 				// Unhide console/manager
 				const bool bMainTodo = ( bConsoleTodo || bManagerTodo );
@@ -664,6 +724,20 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			}
 		}
 		break;
+
+	case TRAY_MSG:
+		switch( lp )
+		{
+		case WM_RBUTTONDOWN: // TODO: context menu instead
+		case WM_LBUTTONDOWN:
+			if( IsWindowVisible( hwnd ) == FALSE )
+			{
+				ShowWindow( hwnd, TRUE );
+			}
+			break;
+
+		}
+		return 0;
 
 	default:
 		return WndprocWinamp( hwnd, message, wp, lp );
