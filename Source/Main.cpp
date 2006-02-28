@@ -707,13 +707,6 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			{
 				const LRESULT res = DefWindowProc( hwnd, message, wp, lp );
 
-				if( bRemoveIcon )
-				{
-					RemoveTrayIcon();
-					bRemoveIcon = false;
-				}
-
-
 				// Unhide console/manager
 				const bool bMainTodo = ( bConsoleTodo || bManagerTodo );
 				if( bConsoleTodo ) ShowWindow( WindowConsole, SW_SHOW );
@@ -735,10 +728,19 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				ShowWindow( hwnd, TRUE );
 			}
 			break;
+			
+		case WM_RBUTTONUP: // TODO: context menu instead
+		case WM_LBUTTONUP:
+			if( bRemoveIcon )
+			{
+				RemoveTrayIcon();
+				bRemoveIcon = false;
+			}
+			break;
 
 		}
 		return 0;
-
+		
 	default:
 		return WndprocWinamp( hwnd, message, wp, lp );
 	}
