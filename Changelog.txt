@@ -7,6 +7,7 @@
 --------------------------------------------------------------------------------
 
    [+] Now bundled with MAD MP3 Decoder and GPL waveOut Plugin
+   [+] Button toolbar added
    [+] Remembers which output plugins were active
    [+] Remembers position in playlist
    [+] Playlist entry numbers

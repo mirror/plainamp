@@ -16,6 +16,7 @@
 #include "Rebar.h"
 #include "Playback.h"
 #include "Config.h"
+#include "Util.h"
 
 WNDPROC WndprocPlaylistBackup = NULL;
 LRESULT CALLBACK WndprocPlaylist( HWND hwnd, UINT message, WPARAM wp, LPARAM lp );
@@ -44,7 +45,7 @@ void PlaylistView::Create()
 
 
 
-
+	LoadCommonControls();
 
 
 	DWORD       dwStyle;

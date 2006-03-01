@@ -19,17 +19,28 @@
 #include "Util.h"
 #include "Config.h"
 
+#include "Winamp/wa_ipc.h"
+#include "resrc1.h"
 
 
-#define BAND_ORDER   1
-#define BAND_EQ      2
-#define BAND_SEEK    3
-#define BAND_VOL     4
-#define BAND_PAN     5
+
+#define BAND_ORDER    1
+#define BAND_EQ       2
+#define BAND_SEEK     3
+#define BAND_VOL      4
+#define BAND_PAN      5
+#define BAND_BUTTONS  6
 
 #define BAND_FIRST   BAND_ORDER
-#define BAND_LAST    BAND_PAN
+#define BAND_LAST    BAND_BUTTONS
 
+
+#define IMAGE_PREV   0
+#define IMAGE_PLAY   1
+#define IMAGE_PAUSE  2
+#define IMAGE_STOP   3
+#define IMAGE_NEXT   4
+#define IMAGE_OPEN   5
 
 
 HWND WindowRebar = NULL; // extern
@@ -59,6 +70,8 @@ HWND WindowPan = NULL;
 WNDPROC WndprocPanBackup = NULL;
 LRESULT CALLBACK WndprocPan( HWND hwnd, UINT message, WPARAM wp, LPARAM lp );
 
+HWND WindowButtons = NULL;
+
 
 
 bool Rebar_BuildOrderBand();
@@ -66,27 +79,31 @@ bool Rebar_BuildEqBand();
 bool Rebar_BuildSeekBand();
 bool Rebar_BuildVolBand();
 bool Rebar_BuildPanBand();
+bool Rebar_BuildButtonsBand();
 
-BandInfo biOrderBand  = { 0 };
-BandInfo biEqBand     = { 0 };
-BandInfo biSeekBand   = { 0 };
-BandInfo biVolBand    = { 0 };
-BandInfo biPanBand    = { 0 };
+BandInfo biOrderBand    = { 0 };
+BandInfo biEqBand       = { 0 };
+BandInfo biSeekBand     = { 0 };
+BandInfo biVolBand      = { 0 };
+BandInfo biPanBand      = { 0 };
+BandInfo biButtonsBand  = { 0 };
 
-const BandInfo biOrderBandDefault  = { 0, 184, false, true };
-const BandInfo biEqBandDefault     = { 3, 184, true,  true };
-const BandInfo biSeekBandDefault   = { 4, 459, false, true };
-const BandInfo biVolBandDefault    = { 1, 319, false, true };
-const BandInfo biPanBandDefault    = { 2, 138, false, true };
+const BandInfo biOrderBandDefault    = { 0, 184, false, true };
+const BandInfo biEqBandDefault       = { 3, 184, true,  true };
+const BandInfo biSeekBandDefault     = { 4, 459, false, true };
+const BandInfo biVolBandDefault      = { 1, 319, false, true };
+const BandInfo biPanBandDefault      = { 2, 138, false, true };
+const BandInfo biButtonsBandDefault  = { 5, 164, true,  true };
 
 
 void BandCallback( ConfVar * var );
 
-ConfBandInfoCallback cbiOrderBand( &biOrderBand, TEXT( "OrderBand" ), ( BandInfo * )&biOrderBandDefault, BandCallback );
-ConfBandInfoCallback cbiEqBand   ( &biEqBand,    TEXT( "EqBand" ),    ( BandInfo * )&biEqBandDefault,    BandCallback );
-ConfBandInfoCallback cbiSeekBand ( &biSeekBand,  TEXT( "SeekBand" ),  ( BandInfo * )&biSeekBandDefault,  BandCallback );
-ConfBandInfoCallback cbiVolBand  ( &biVolBand,   TEXT( "VolBand" ),   ( BandInfo * )&biVolBandDefault,   BandCallback );
-ConfBandInfoCallback cbiPanBand  ( &biPanBand,   TEXT( "PanBand" ),   ( BandInfo * )&biPanBandDefault,   BandCallback );
+ConfBandInfoCallback cbiOrderBand  ( &biOrderBand,   TEXT( "OrderBand" ),   ( BandInfo * )&biOrderBandDefault,   BandCallback );
+ConfBandInfoCallback cbiEqBand     ( &biEqBand,      TEXT( "EqBand" ),      ( BandInfo * )&biEqBandDefault,      BandCallback );
+ConfBandInfoCallback cbiSeekBand   ( &biSeekBand,    TEXT( "SeekBand" ),    ( BandInfo * )&biSeekBandDefault,    BandCallback );
+ConfBandInfoCallback cbiVolBand    ( &biVolBand,     TEXT( "VolBand" ),     ( BandInfo * )&biVolBandDefault,     BandCallback );
+ConfBandInfoCallback cbiPanBand    ( &biPanBand,     TEXT( "PanBand" ),     ( BandInfo * )&biPanBandDefault,     BandCallback );
+ConfBandInfoCallback cbiButtonsBand( &biButtonsBand, TEXT( "ButtonsBand" ), ( BandInfo * )&biButtonsBandDefault, BandCallback );
 
 bool bInvertPanSlider;
 ConfBool cbInvertPanSlider( &bInvertPanSlider, TEXT( "InvertPanSlider" ), CONF_MODE_PUBLIC, false );
@@ -124,6 +141,11 @@ void BandCallback( ConfVar * var )
 	{
 		band  = &biPanBand;
 		id    = BAND_PAN;
+	}
+	else if( var == &cbiButtonsBand )
+	{
+		band  = &biButtonsBand;
+		id    = BAND_BUTTONS;
 	}
 	else
 	{
@@ -210,23 +232,26 @@ bool Toolbar::Create()
 	}
 
 	rebar_menu = CreatePopupMenu();
-	AppendMenu( rebar_menu, MF_STRING, BAND_EQ,    TEXT( "Equalizer" ) );
-	AppendMenu( rebar_menu, MF_STRING, BAND_ORDER, TEXT( "Order"     ) );
-	AppendMenu( rebar_menu, MF_STRING, BAND_PAN,   TEXT( "Panning"   ) );
-	AppendMenu( rebar_menu, MF_STRING, BAND_SEEK,  TEXT( "Seekbar"   ) );
-	AppendMenu( rebar_menu, MF_STRING, BAND_VOL,   TEXT( "Volume"    ) );
+	AppendMenu( rebar_menu, MF_STRING, BAND_BUTTONS, TEXT( "Buttons"   ) );
+	AppendMenu( rebar_menu, MF_STRING, BAND_EQ,      TEXT( "Equalizer" ) );
+	AppendMenu( rebar_menu, MF_STRING, BAND_ORDER,   TEXT( "Order"     ) );
+	AppendMenu( rebar_menu, MF_STRING, BAND_PAN,     TEXT( "Panning"   ) );
+	AppendMenu( rebar_menu, MF_STRING, BAND_SEEK,    TEXT( "Seekbar"   ) );
+	AppendMenu( rebar_menu, MF_STRING, BAND_VOL,     TEXT( "Volume"    ) );
 	
 	Rebar_BuildOrderBand();
 	Rebar_BuildEqBand();
 	Rebar_BuildSeekBand();
 	Rebar_BuildVolBand();
 	Rebar_BuildPanBand();
+	Rebar_BuildButtonsBand();
 
-	cbiOrderBand.Apply( WindowRebar, BAND_ORDER );
-	cbiEqBand.Apply   ( WindowRebar, BAND_EQ    );
-	cbiSeekBand.Apply ( WindowRebar, BAND_SEEK  );
-	cbiVolBand.Apply  ( WindowRebar, BAND_VOL   );
-	cbiPanBand.Apply  ( WindowRebar, BAND_PAN   );
+	cbiOrderBand.Apply  ( WindowRebar, BAND_ORDER   );
+	cbiEqBand.Apply     ( WindowRebar, BAND_EQ      );
+	cbiSeekBand.Apply   ( WindowRebar, BAND_SEEK    );
+	cbiVolBand.Apply    ( WindowRebar, BAND_VOL     );
+	cbiPanBand.Apply    ( WindowRebar, BAND_PAN     );
+	cbiButtonsBand.Apply( WindowRebar, BAND_BUTTONS );
 
 	return true;	
 }
@@ -300,10 +325,10 @@ bool Rebar_BuildOrderBand()
 	rbBand.cyMinChild	= 21;                      // IMP
 	rbBand.cx			= biOrderBand.m_iWidth;
 	rbBand.wID			= BAND_ORDER;
-	rbBand.cyChild		= 21;                    //rc.bottom - rc.top;
-	rbBand.cyMaxChild	= 21;                  // rc.bottom - rc.top;
+	rbBand.cyChild		= 21;
+	rbBand.cyMaxChild	= 21;
 	rbBand.cyIntegral	= 1;
-	rbBand.cxIdeal		= 200;                //rc.right - rc.left;
+	rbBand.cxIdeal		= 200;
    
 	// Add band
 	SendMessage( WindowRebar, RB_INSERTBAND, ( WPARAM )-1, ( LPARAM )&rbBand );
@@ -402,10 +427,10 @@ bool Rebar_BuildEqBand()
 	rbBand.cyMinChild	= 21;                      // IMP
 	rbBand.cx			= biEqBand.m_iWidth;
 	rbBand.wID			= BAND_EQ;
-	rbBand.cyChild		= 21;                    //rc.bottom - rc.top;
-	rbBand.cyMaxChild	= 21;                  // rc.bottom - rc.top;
+	rbBand.cyChild		= 21;
+	rbBand.cyMaxChild	= 21;
 	rbBand.cyIntegral	= 1;
-	rbBand.cxIdeal		= 200;                //rc.right - rc.left;
+	rbBand.cxIdeal		= 200;
    
 	// Add band
 	SendMessage( WindowRebar, RB_INSERTBAND, ( WPARAM )-1, ( LPARAM )&rbBand );
@@ -429,7 +454,6 @@ bool Rebar_BuildSeekBand()
 		TRACKBAR_CLASS,
 		TEXT( "" ), 
         WS_CHILD |
-//			WS_VISIBLE |
 			TBS_HORZ |
 			TBS_NOTICKS |
 			TBS_FIXEDLENGTH |
@@ -491,14 +515,14 @@ bool Rebar_BuildSeekBand()
 
 	rbbi_seek.lpText		= " Pos";
 	rbbi_seek.hwndChild		= WindowSeek;
-	rbbi_seek.cxMinChild	= 100;       //rc.right - rc.left;
+	rbbi_seek.cxMinChild	= 100;
 	rbbi_seek.cyMinChild	= 21;        // IMP
 	rbbi_seek.cx			= biSeekBand.m_iWidth;
 	rbbi_seek.wID			= BAND_SEEK;
-	rbbi_seek.cyChild		= 21;           //rc.bottom - rc.top;
-	rbbi_seek.cyMaxChild	= 21;           // rc.bottom - rc.top;
+	rbbi_seek.cyChild		= 21;
+	rbbi_seek.cyMaxChild	= 21;
 	rbbi_seek.cyIntegral	= 1;
-	rbbi_seek.cxIdeal		= 300;          //rc.right - rc.left;
+	rbbi_seek.cxIdeal		= 300;
 
    
 	// Add band
@@ -526,7 +550,6 @@ bool Rebar_BuildVolBand()
 		TRACKBAR_CLASS,
 		TEXT( "" ), 
         WS_CHILD |
-//			WS_VISIBLE |
 			TBS_HORZ |
 			TBS_NOTICKS |
 			TBS_FIXEDLENGTH |
@@ -583,14 +606,14 @@ bool Rebar_BuildVolBand()
 
 	rbbi_vol.lpText     = TEXT( " Vol" );
 	rbbi_vol.hwndChild  = WindowVol;
-	rbbi_vol.cxMinChild	= 100;              //rc.right - rc.left;
+	rbbi_vol.cxMinChild	= 100;
 	rbbi_vol.cyMinChild	= 21;               // IMP
 	rbbi_vol.cx         = biVolBand.m_iWidth;
 	rbbi_vol.wID        = BAND_VOL;
-	rbbi_vol.cyChild    = 21;               //rc.bottom - rc.top;
-	rbbi_vol.cyMaxChild	= 21;               // rc.bottom - rc.top;
+	rbbi_vol.cyChild    = 21;
+	rbbi_vol.cyMaxChild	= 21;
 	rbbi_vol.cyIntegral	= 1;
-	rbbi_vol.cxIdeal    = 100;             //rc.right - rc.left;
+	rbbi_vol.cxIdeal    = 100;
    
 	// Add band
 	SendMessage( WindowRebar, RB_INSERTBAND, ( WPARAM )-1, ( LPARAM )&rbbi_vol );
@@ -612,7 +635,6 @@ bool Rebar_BuildPanBand()
 		TRACKBAR_CLASS,
 		TEXT( "" ), 
         WS_CHILD |
-//			WS_VISIBLE |
 			TBS_HORZ |
 			TBS_NOTICKS |
 			TBS_FIXEDLENGTH |
@@ -671,14 +693,14 @@ bool Rebar_BuildPanBand()
 
 	rbbi_pan.lpText		= TEXT( " Pan" );
 	rbbi_pan.hwndChild  = WindowPan;
-	rbbi_pan.cxMinChild	= 100;         //rc.right - rc.left;
+	rbbi_pan.cxMinChild	= 100;
 	rbbi_pan.cyMinChild	= 21;            // IMP
 	rbbi_pan.cx         = biPanBand.m_iWidth;
 	rbbi_pan.wID        = BAND_PAN;
-	rbbi_pan.cyChild    = 21;            //rc.bottom - rc.top;
-	rbbi_pan.cyMaxChild	= 21;           // rc.bottom - rc.top;
+	rbbi_pan.cyChild    = 21;
+	rbbi_pan.cyMaxChild	= 21;
 	rbbi_pan.cyIntegral	= 1;
-	rbbi_pan.cxIdeal    = 100;            //rc.right - rc.left;
+	rbbi_pan.cxIdeal    = 100;
    
 	// Add band
 	SendMessage( WindowRebar, RB_INSERTBAND, ( WPARAM )-1, ( LPARAM )&rbbi_pan );
@@ -686,6 +708,153 @@ bool Rebar_BuildPanBand()
 	return true;
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////
+bool Rebar_BuildButtonsBand()
+{
+	if( !WindowRebar ) return false;
+
+	WindowButtons = CreateWindowEx(
+		0,
+		TOOLBARCLASSNAME,
+		TEXT( "" ), 
+        WS_CHILD |
+			TBSTYLE_FLAT |
+			CCS_NORESIZE |            // Means we care about the size ourselves
+			CCS_NOPARENTALIGN |       // Make it work with the rebar control
+			CCS_NODIVIDER,            // No divider on top
+		0,
+		0,
+		100,
+		21,
+		WindowRebar,
+		NULL,
+		g_hInstance,
+		NULL
+	);
+
+	if( !WindowButtons ) return false;
+
+	SendMessage( WindowButtons, TB_BUTTONSTRUCTSIZE, ( WPARAM )sizeof( TBBUTTON ), 0 );
+
+	TBBUTTON tb_button[ 7 ];
+
+	// Make image list, TODO delete later
+	HIMAGELIST hImages = ImageList_LoadBitmap(
+		GetModuleHandle( NULL ),         // HINSTANCE hi
+		MAKEINTRESOURCE( IDB_BITMAP1 ),  // LPCTSTR lpbmp
+		16,                              // int cx
+		6,                               // int cGrow
+		RGB( 255, 000, 255 )             // COLORREF crMask
+	);
+	
+	SendMessage( WindowButtons, TB_SETIMAGELIST, 0, ( LPARAM )hImages );
+	// SendMessage( WindowButtons, TB_SETHOTIMAGELIST, 0, ( LPARAM )hImages );
+	// SendMessage( WindowButtons, TB_SETDISABLEDIMAGELIST, 0, ( LPARAM )hImages );
+
+	// Build buttons
+	tb_button[ 0 ].iBitmap   = IMAGE_PREV;
+	tb_button[ 0 ].idCommand = WINAMP_BUTTON1;
+	tb_button[ 0 ].fsState   = TBSTATE_ENABLED;
+	tb_button[ 0 ].fsStyle   = TBSTYLE_BUTTON;
+	tb_button[ 0 ].dwData    = 0;
+	tb_button[ 0 ].iString   = SendMessage( WindowButtons, TB_ADDSTRING, 0, ( LPARAM )TEXT( "Previous" ));
+
+	tb_button[ 1 ].iBitmap   = IMAGE_PLAY;
+	tb_button[ 1 ].idCommand = WINAMP_BUTTON2;
+	tb_button[ 1 ].fsState   = TBSTATE_ENABLED;
+	tb_button[ 1 ].fsStyle   = TBSTYLE_BUTTON;
+	tb_button[ 1 ].dwData    = 0;
+	tb_button[ 1 ].iString   = SendMessage( WindowButtons, TB_ADDSTRING, 0, ( LPARAM )TEXT( "Play" ));
+
+	tb_button[ 2 ].iBitmap   = IMAGE_PAUSE;
+	tb_button[ 2 ].idCommand = WINAMP_BUTTON3;
+	tb_button[ 2 ].fsState   = TBSTATE_ENABLED;
+	tb_button[ 2 ].fsStyle   = TBSTYLE_BUTTON;
+	tb_button[ 2 ].dwData    = 0;
+	tb_button[ 2 ].iString   = SendMessage( WindowButtons, TB_ADDSTRING, 0, ( LPARAM )TEXT( "Pause" ));
+
+	tb_button[ 3 ].iBitmap   = IMAGE_STOP;
+	tb_button[ 3 ].idCommand = WINAMP_BUTTON4;
+	tb_button[ 3 ].fsState   = TBSTATE_ENABLED;
+	tb_button[ 3 ].fsStyle   = TBSTYLE_BUTTON;
+	tb_button[ 3 ].dwData    = 0;
+	tb_button[ 3 ].iString   = SendMessage( WindowButtons, TB_ADDSTRING, 0, ( LPARAM )TEXT( "Stop" ));
+
+	tb_button[ 4 ].iBitmap   = IMAGE_NEXT;
+	tb_button[ 4 ].idCommand = WINAMP_BUTTON5;
+	tb_button[ 4 ].fsState   = TBSTATE_ENABLED;
+	tb_button[ 4 ].fsStyle   = TBSTYLE_BUTTON;
+	tb_button[ 4 ].dwData    = 0;
+	tb_button[ 4 ].iString   = SendMessage( WindowButtons, TB_ADDSTRING, 0, ( LPARAM )TEXT( "Next" ));
+
+	tb_button[ 5 ].iBitmap   = 0;
+	tb_button[ 5 ].idCommand = -1;
+	tb_button[ 5 ].fsState   = TBSTATE_ENABLED;
+	tb_button[ 5 ].fsStyle   = TBSTYLE_SEP;
+	tb_button[ 5 ].dwData    = 0;
+	tb_button[ 5 ].iString   = 0;
+
+	tb_button[ 6 ].iBitmap   = IMAGE_OPEN;
+	tb_button[ 6 ].idCommand = WINAMP_FILE_PLAY;
+	tb_button[ 6 ].fsState   = TBSTATE_ENABLED;
+	tb_button[ 6 ].fsStyle   = TBSTYLE_BUTTON;
+	tb_button[ 6 ].dwData    = 0;
+	tb_button[ 6 ].iString   = SendMessage( WindowButtons, TB_ADDSTRING, 0, ( LPARAM )TEXT( "Open" ));
+
+	// Add buttons
+	SendMessage( WindowButtons, TB_SETBUTTONSIZE, 0, MAKELONG( 16, 14 ) );
+	SendMessage( WindowButtons, TB_ADDBUTTONS, 7, ( LPARAM )( LPTBBUTTON )&tb_button );
+
+	// Disable labels
+	SendMessage( WindowButtons, TB_SETMAXTEXTROWS, 0, 0 );
+
+	// Resize
+	RECT r;
+	GetWindowRect( WindowButtons, &r );
+	SetWindowPos( WindowButtons, NULL, 0, 0, 146, r.bottom - r.top, SWP_NOMOVE );
+	GetWindowRect( WindowButtons, &r );
+
+	REBARBANDINFO rbbi_buttons;
+	rbbi_buttons.cbSize		= sizeof( REBARBANDINFO );
+	rbbi_buttons.fMask		= 0 |
+	//	RBBIM_BACKGROUND |	// The hbmBack member is valid or must be filled.
+		RBBIM_CHILD |		// The hwndChild member is valid or must be filled.
+		RBBIM_CHILDSIZE |	// The cxMinChild, cyMinChild, cyChild, cyMaxChild, and cyIntegral members are valid or must be filled.
+	//	RBBIM_COLORS |		// The clrFore and clrBack members are valid or must be filled.
+	//	RBBIM_HEADERSIZE |	// Version 4.71. The cxHeader member is valid or must be filled.
+		RBBIM_IDEALSIZE |	// Version 4.71. The cxIdeal member is valid or must be filled.
+		RBBIM_ID |			// The wID member is valid or must be filled.
+	//	RBBIM_IMAGE |		// The iImage member is valid or must be filled.
+	//	RBBIM_LPARAM |		// Version 4.71. The lParam member is valid or must be filled.
+		RBBIM_SIZE |		// The cx member is valid or must be filled.
+		RBBIM_STYLE |		// The fStyle member is valid or must be filled.
+		// RBBIM_TEXT |		// The lpText member is valid or must be filled.
+		0;									
+
+	rbbi_buttons.fStyle		= RBBS_GRIPPERALWAYS |
+								RBBS_CHILDEDGE | 
+								( biButtonsBand.m_bBreak ? RBBS_BREAK : 0 );
+
+	// rbbi_buttons.lpText		= TEXT( " Playback" );
+	rbbi_buttons.hwndChild  = WindowButtons;
+	rbbi_buttons.cxMinChild	= r.right - r.left;
+	rbbi_buttons.cyMinChild	= 21;            // IMP
+	rbbi_buttons.cx         = r.right - r.left;
+	rbbi_buttons.wID        = BAND_BUTTONS;
+	rbbi_buttons.cyChild    = 21;
+	rbbi_buttons.cyMaxChild	= 21;
+	rbbi_buttons.cyIntegral	= 1;
+	rbbi_buttons.cxIdeal    = r.right - r.left;
+   
+	// Add band
+	SendMessage( WindowRebar, RB_INSERTBAND, ( WPARAM )-1, ( LPARAM )&rbbi_buttons );
+	
+	return true;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -774,6 +943,8 @@ LRESULT CALLBACK WndprocRebar( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 		cbiVolBand.RemoveCallback();
 		cbiPanBand.TriggerCallback();
 		cbiPanBand.RemoveCallback();
+		cbiButtonsBand.TriggerCallback();
+		cbiButtonsBand.RemoveCallback();
 		break;
 	
 	}

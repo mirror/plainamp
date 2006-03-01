@@ -34,7 +34,7 @@ bool LoadCommonControls()
 	
 	INITCOMMONCONTROLSEX icce = {
 		sizeof( INITCOMMONCONTROLSEX ),
-		ICC_BAR_CLASSES |           // Statusbar, trackbar
+		ICC_BAR_CLASSES |           // Statusbar, trackbar, toolbar
 			ICC_COOL_CLASSES |      // Rebar 
 			ICC_LISTVIEW_CLASSES |  // Listview
 			ICC_STANDARD_CLASSES |  //
