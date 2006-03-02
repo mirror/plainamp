@@ -20,7 +20,7 @@
 
 
 #define PLUGIN_NAME     "Plainamp Rebar Vis Plugin"
-#define PLUGIN_VERSION  "0.2"
+#define PLUGIN_VERSION  "v0.3"
 
 #define PLUGIN_DESC     PLUGIN_NAME " " PLUGIN_VERSION
 
@@ -119,30 +119,6 @@ void config( struct winampVisModule * this_mod )
 
 
 
-void ResizeContext( HWND h, int cx, int cy )
-{
-	width  = cx;
-	height = cy;
-
-	
-	HDC memDC_COPY = memDC;
-	HBITMAP	memBM_COPY = memBM;
-	
-	const HDC hdc = GetDC( h );
-		memDC = CreateCompatibleDC( hdc );
-		memBM = CreateCompatibleBitmap( hdc, width, height );
-		oldBM = ( HBITMAP )SelectObject( memDC, memBM );
-	ReleaseDC( h, hdc );
-
-	if( memDC_COPY != NULL )
-	{
-		DeleteObject( memDC_COPY );
-		DeleteObject( memBM_COPY );
-	}
-}
-
-
-
 LRESULT CALLBACK WndprocTarget( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
 	switch( message )
@@ -156,7 +132,8 @@ LRESULT CALLBACK WndprocTarget( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 		break;
 */
 	case WM_SIZE:
-		ResizeContext( hwnd, LOWORD( lp ), HIWORD( lp ) );
+		width = LOWORD( lp );
+		height = HIWORD( lp );
 		break;
 		
 	}
@@ -192,7 +169,7 @@ int init( struct winampVisModule * this_mod )
 	// Create doublebuffer
 	const HDC hdc = GetDC( hRenderTarget );
 		memDC = CreateCompatibleDC( hdc );
-		memBM = CreateCompatibleBitmap( hdc, width, height );
+		memBM = CreateCompatibleBitmap( hdc, 576, 256 );
 		oldBM = ( HBITMAP )SelectObject( memDC, memBM );
 	ReleaseDC( hRenderTarget, hdc );
 
@@ -208,31 +185,30 @@ int init( struct winampVisModule * this_mod )
 int render_spec( struct winampVisModule * this_mod )
 {
 	// Clear background
-	RECT rect = { 0, 0, width, height };
+	RECT rect = { 0, 0, 576, 256 };
 	FillRect(memDC, &rect, ( HBRUSH )( COLOR_3DFACE + 1 ) );
 	
 	// Draw analyser
 	SelectObject( memDC, pen );
-	for( int x = 0; x < width; x++ )
+	for( int x = 0; x < 576; x++ )
 	{
 		int val = 0;
 		
-		const int ix = x * 576 / width;
 		for( int y = 0; y < this_mod->nCh; y++ )
 		{
-			if( this_mod->spectrumData[ y ][ ix ] > val )
+			if( this_mod->spectrumData[ y ][ x ] > val )
 			{
-				val = this_mod->spectrumData[ y ][ ix ];
+				val = this_mod->spectrumData[ y ][ x ];
 			}
 		}
 		
-		MoveToEx( memDC, x, height, NULL );
-		LineTo( memDC, x, ( 256 - val ) * height / 256 );
+		MoveToEx( memDC, x, 256, NULL );
+		LineTo( memDC, x, 256 - val );
 	}
 
 	// Copy doublebuffer to window
 	HDC hdc = GetDC( hRenderTarget );
-	BitBlt( hdc, 0, 0, width, height, memDC, 0, 0, SRCCOPY );
+		StretchBlt( hdc, 0, 0, width, height, memDC, 0, 0, 576, 256, SRCCOPY );
 	ReleaseDC( hRenderTarget, hdc );
 
 	return bRunning ? 0 : 1;
