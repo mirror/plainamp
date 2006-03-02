@@ -74,6 +74,8 @@ LRESULT CALLBACK WndprocPan( HWND hwnd, UINT message, WPARAM wp, LPARAM lp );
 HWND WindowButtons = NULL;
 
 HWND WindowVis = NULL; // extern
+WNDPROC WndprocVisBackup = NULL;
+LRESULT CALLBACK WndprocVis( HWND hwnd, UINT message, WPARAM wp, LPARAM lp );
 
 
 
@@ -884,7 +886,7 @@ bool Rebar_BuildVisBand()
 	WindowVis = CreateWindowEx(
 		WS_EX_STATICEDGE,
 		TEXT( "STATIC" ),
-		TEXT( "Run <vis_plainbar.dll> to see some activity here." ), 
+		TEXT( "" ), 
         WS_CHILD | SS_CENTER,
 		0,
 		0,
@@ -939,6 +941,13 @@ bool Rebar_BuildVisBand()
    
 	// Add band
 	SendMessage( WindowRebar, RB_INSERTBAND, ( WPARAM )-1, ( LPARAM )&rbbi_buttons );
+
+	// Exchange window procedure
+	WndprocVisBackup = ( WNDPROC )GetWindowLong( WindowVis, GWL_WNDPROC );
+	if( WndprocVisBackup != NULL )
+	{
+		SetWindowLong( WindowVis, GWL_WNDPROC, ( LONG )WndprocVis );
+	}
 	
 	return true;
 }
@@ -954,8 +963,8 @@ void ContextMenuRebar( POINT * p )
 	rbbi.cbSize  = sizeof( REBARBANDINFO );
 	rbbi.fMask   = RBBIM_STYLE;
 	
-	bool bBandVisible[ BAND_LAST - BAND_FIRST + 1 ] = { 0 };
-	int  iBandIndex  [ BAND_LAST - BAND_FIRST + 1 ] = { 0 };
+	bool bBandVisible[ BAND_LAST - BAND_FIRST + 1 ] = { 0 }; // ID to visibility
+	int  iBandIndex  [ BAND_LAST - BAND_FIRST + 1 ] = { 0 }; // ID to Index
 
 	for( int i = BAND_FIRST; i <= BAND_LAST; i++ )
 	{
@@ -999,7 +1008,17 @@ void ContextMenuRebar( POINT * p )
 	if( ( iIndex >= BAND_FIRST ) && ( iIndex <= BAND_LAST ) )
 	{
 		const int iArrayIndex = iIndex - BAND_FIRST;
-		SendMessage( WindowRebar, RB_SHOWBAND, iBandIndex[ iArrayIndex ], bBandVisible[ iArrayIndex ] ? FALSE : TRUE );
+		// SendMessage( WindowRebar, RB_SHOWBAND, iBandIndex[ iArrayIndex ], bBandVisible[ iArrayIndex ] ? FALSE : TRUE );
+		
+		// Turn off vis child
+		if( iIndex == BAND_VIS )
+		{
+			HWND hChild = GetWindow( WindowVis, GW_CHILD );
+			if( IsWindow( hChild ) )
+			{
+				SendMessage( hChild, WM_DESTROY, 0, 0 );
+			}
+		}
 	}
 }
 
@@ -1318,6 +1337,24 @@ LRESULT CALLBACK WndprocPan( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 	return CallWindowProc( WndprocPanBackup, hwnd, message, wp, lp );
 }
 
+////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////
+LRESULT CALLBACK WndprocVis( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
+{
+	switch( message )
+	{
+	case WM_SIZE:
+		{
+			// Resize vis child
+			HWND hChild = GetWindow( hwnd, GW_CHILD );
+			if( !IsWindow( hChild ) ) break;
+			MoveWindow( hChild, 0, 0, LOWORD( lp ), HIWORD( lp ), TRUE );
+		}
+		break;
+	}
+	return CallWindowProc( WndprocVisBackup, hwnd, message, wp, lp );
+}
 
 
 /////////////////////////

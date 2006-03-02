@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Plainamp Rebar Vis Plugin
+// Plainamp Toolbar Vis Plugin
 // 
 // Copyright © 2006  Sebastian Pipping <webmaster@hartwork.org>
 // 
@@ -19,8 +19,8 @@
 
 
 
-#define PLUGIN_NAME     "Plainamp Rebar Vis Plugin"
-#define PLUGIN_VERSION  "v0.4"
+#define PLUGIN_NAME     "Plainamp Toolbar Vis Plugin"
+#define PLUGIN_VERSION  "v0.5"
 
 #define PLUGIN_DESC     PLUGIN_NAME " " PLUGIN_VERSION
 
