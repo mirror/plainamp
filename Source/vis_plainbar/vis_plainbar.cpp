@@ -20,9 +20,13 @@
 
 
 #define PLUGIN_NAME     "Plainamp Rebar Vis Plugin"
-#define PLUGIN_VERSION  "v0.3"
+#define PLUGIN_VERSION  "v0.4"
 
 #define PLUGIN_DESC     PLUGIN_NAME " " PLUGIN_VERSION
+
+
+
+static char * szClassName = "PlainbarClass";
 
 
 
@@ -41,7 +45,7 @@ HBITMAP	memBM = NULL;  // Memory bitmap (for memDC)
 HBITMAP	oldBM = NULL;  // Old bitmap (from memDC)
 
 
-HWND hRenderTarget = NULL;
+HWND hRender = NULL;
 int width = 0;  
 int height = 0;  
 bool bRunning = false;
@@ -63,7 +67,7 @@ winampVisHeader hdr = {
 
 winampVisModule mod_spec =
 {
-	"Spectrum Analyser",
+	"Default",
 	NULL,	// hwndParent
 	NULL,	// hDllInstance
 	0,		// sRate
@@ -123,21 +127,19 @@ LRESULT CALLBACK WndprocTarget( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
 	switch( message )
 	{
-/*
-	case WM_SHOWWINDOW:
-		if( wp == FALSE )
-		{
-			bRunning = false;
-		}
-		break;
-*/
 	case WM_SIZE:
 		width = LOWORD( lp );
 		height = HIWORD( lp );
 		break;
-		
+
+	case WM_DESTROY:
+		bRunning = false;
+		PostQuitMessage( 0 );
+		return 0;
+	
 	}
-	return CallWindowProc( WndprocTargetBackup, hwnd, message, wp, lp );
+	
+	return DefWindowProc( hwnd, message, wp, lp );
 }
 
 
@@ -150,33 +152,56 @@ int init( struct winampVisModule * this_mod )
 	const int IPC_GETPLAINBARTARGET = ( int )SendMessage( this_mod->hwndParent, WM_WA_IPC, ( WPARAM )"IPC_GETPLAINBARTARGET", IPC_REGISTER_WINAMP_IPCMESSAGE );
 	if( IPC_GETPLAINBARTARGET <= 0 ) return 1;
 	
-	// Get render target
-	hRenderTarget = ( HWND )SendMessage( this_mod->hwndParent, WM_WA_IPC, 0, IPC_GETPLAINBARTARGET );
-	if( !IsWindow( hRenderTarget ) ) return 1;
+	// Get render parent
+	HWND hRenderParent = ( HWND )SendMessage( this_mod->hwndParent, WM_WA_IPC, 0, IPC_GETPLAINBARTARGET );
+	if( !IsWindow( hRenderParent ) ) return 1;
 
-	// Exchange window procedure
-	WndprocTargetBackup = ( WNDPROC )GetWindowLong( hRenderTarget, GWL_WNDPROC );
-	if( WndprocTargetBackup != NULL )
-	{
-		SetWindowLong( hRenderTarget, GWL_WNDPROC, ( LONG )WndprocTarget );
-	}
-	
+	// Plug our child in
+	WNDCLASS wc;
+	ZeroMemory( &wc, sizeof( WNDCLASS ) );
+	wc.lpfnWndProc    = WndprocTarget;
+	wc.hInstance      = this_mod->hDllInstance;
+	wc.hCursor        = LoadCursor( NULL, IDC_ARROW );
+	wc.lpszClassName  = szClassName;
+
+	if( !RegisterClass( &wc ) ) return 1;
+
 	RECT r;
-	GetClientRect( hRenderTarget, &r );
+	GetClientRect( hRenderParent, &r );
 	width = r.right - r.left;
 	height = r.bottom - r.top;
+
+	hRender = CreateWindowEx(
+		0,
+		szClassName,
+		"",
+		WS_CHILD | WS_VISIBLE,
+		0,
+		0,
+		width,
+		height,
+		hRenderParent,
+		NULL,
+		this_mod->hDllInstance,
+		0
+	);
+	
+	if( !hRender )
+	{
+		UnregisterClass( szClassName, this_mod->hDllInstance );
+		return 1;
+	}
 	
 	// Create doublebuffer
-	const HDC hdc = GetDC( hRenderTarget );
+	const HDC hdc = GetDC( hRender );
 		memDC = CreateCompatibleDC( hdc );
 		memBM = CreateCompatibleBitmap( hdc, 576, 256 );
 		oldBM = ( HBITMAP )SelectObject( memDC, memBM );
-	ReleaseDC( hRenderTarget, hdc );
+	ReleaseDC( hRender, hdc );
 
 	pen = CreatePen( PS_SOLID, 0, GetSysColor( COLOR_APPWORKSPACE ) );
 
 	bRunning = true;
-	
 	return 0;
 }
 
@@ -207,9 +232,9 @@ int render_spec( struct winampVisModule * this_mod )
 	}
 
 	// Copy doublebuffer to window
-	HDC hdc = GetDC( hRenderTarget );
+	HDC hdc = GetDC( hRender );
 		StretchBlt( hdc, 0, 0, width, height, memDC, 0, 0, 576, 256, SRCCOPY );
-	ReleaseDC( hRenderTarget, hdc );
+	ReleaseDC( hRender, hdc );
 
 	return bRunning ? 0 : 1;
 }
@@ -218,7 +243,12 @@ int render_spec( struct winampVisModule * this_mod )
 
 void quit( struct winampVisModule * this_mod )
 {
-	bRunning = false;
+	if( bRunning )
+	{
+		DestroyWindow( hRender );
+	}
+	
+	UnregisterClass( szClassName, this_mod->hDllInstance );
 	
 	// Delete doublebuffer
 	SelectObject( memDC, oldBM );
