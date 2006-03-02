@@ -24,11 +24,13 @@
 #include "Embed.h"
 #include "Unicode.h"
 #include "zlib/zlib.h"
+#include "Rebar.h"
 
 
 
 int IPC_GENHOTKEYS_ADD = 0;
 int ID_DYNAMICLIBRARY = 0;
+int IPC_GETPLAINBARTARGET = 0;
 
 
 
@@ -440,7 +442,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				/*
 				if( wp == ID_DYNAMICLIBRARY )
 				{
-					// Studupid dnylib workaround
+					// Stupid dnylib workaround
 					PostMessage( hwnd, WM_COMMAND, ID_DYNAMICLIBRARY | ( 1 << 16 ), 0 );
 				}
 				*/
@@ -909,6 +911,10 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				{
 					ID_DYNAMICLIBRARY = res;
 				}
+				else if( !stricmp( ( char * )wp, "IPC_GETPLAINBARTARGET" ) )
+				{
+					IPC_GETPLAINBARTARGET = res;
+				}
 				
 				return res;
 			}
@@ -927,7 +933,14 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 
 		default:
 			{
-				if( lp == IPC_GENHOTKEYS_ADD ) break;
+				if( lp == IPC_GENHOTKEYS_ADD )
+				{
+					break;
+				}
+				else if( lp == IPC_GETPLAINBARTARGET )
+				{
+					return ( LRESULT )WindowVis;
+				}
 
 				TCHAR szBuffer[ 5000 ];
 				_stprintf( szBuffer, TEXT( "WM_WA_IPC <%i> <%i>" ), wp, lp );

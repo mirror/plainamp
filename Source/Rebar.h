@@ -24,6 +24,8 @@ extern HWND WindowOrder;
 extern HWND WindowEq;
 extern HWND WindowSeek;
 
+extern HWND WindowVis;
+
 extern int iRebarHeight;
 
 
