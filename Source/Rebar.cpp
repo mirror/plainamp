@@ -1008,7 +1008,7 @@ void ContextMenuRebar( POINT * p )
 	if( ( iIndex >= BAND_FIRST ) && ( iIndex <= BAND_LAST ) )
 	{
 		const int iArrayIndex = iIndex - BAND_FIRST;
-		// SendMessage( WindowRebar, RB_SHOWBAND, iBandIndex[ iArrayIndex ], bBandVisible[ iArrayIndex ] ? FALSE : TRUE );
+		SendMessage( WindowRebar, RB_SHOWBAND, iBandIndex[ iArrayIndex ], bBandVisible[ iArrayIndex ] ? FALSE : TRUE );
 		
 		// Turn off vis child
 		if( iIndex == BAND_VIS )

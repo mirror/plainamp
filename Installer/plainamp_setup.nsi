@@ -143,10 +143,12 @@ Section "MainSection" SEC01
   IntCmp 0 $2 +2
   File "Instdir\Plugins\in_mad.dll"
   Call CloseConfirmLookup
-  
+
   Pop $2
   Pop $1
   Pop $0
+
+  File "Instdir\Plugins\vis_plainbar.dll"
 
 
 ; Shortcuts
@@ -251,6 +253,8 @@ Section Uninstall
 ; -------------------------------------
   StrCpy $1 "in_mad.dll"
   Call un.DeleteRetryLookup
+  StrCpy $1 "vis_plainbar.dll"
+  Call un.DeleteRetry
 
 ; -------------------------------------
   StrCpy $0 "$SMPROGRAMS\$ICONS_GROUP"
