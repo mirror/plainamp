@@ -96,13 +96,13 @@ BandInfo biPanBand      = { 0 };
 BandInfo biButtonsBand  = { 0 };
 BandInfo biVisBand  = { 0 };
 
-const BandInfo biOrderBandDefault    = { 0, 184, false, true };
-const BandInfo biEqBandDefault       = { 3, 184, true,  true };
-const BandInfo biSeekBandDefault     = { 4, 459, false, true };
-const BandInfo biVolBandDefault      = { 1, 319, false, true };
+const BandInfo biOrderBandDefault    = { 0, 184, true,  true };
+const BandInfo biVolBandDefault      = { 1, 450, false, true };
 const BandInfo biPanBandDefault      = { 2, 138, false, true };
-const BandInfo biButtonsBandDefault  = { 5, 184, true,  true };
-const BandInfo biVisBandDefault      = { 6, 591, false, false };
+const BandInfo biEqBandDefault       = { 3, 170, true,  true };
+const BandInfo biVisBandDefault      = { 4, 350, false, true };
+const BandInfo biButtonsBandDefault  = { 5, 147, true,  true };
+const BandInfo biSeekBandDefault     = { 6, 373, false, true };
 
 
 void BandCallback( ConfVar * var );

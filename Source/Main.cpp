@@ -33,8 +33,8 @@
 #define CLASSNAME_MAIN      TEXT( "Winamp v1.x" )
 #define MAIN_TITLE          PLAINAMP_LONG_TITLE
 
-#define MAIN_WIDTH          700
-#define MAIN_HEIGHT         500
+#define MAIN_WIDTH          731
+#define MAIN_HEIGHT         562
 
 
 
