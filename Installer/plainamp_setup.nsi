@@ -122,6 +122,11 @@ Section "MainSection" SEC01
   SetOverwrite ifnewer
 
   File "..\Binary\Plainamp.exe"
+
+  ; Create ini and activate <out_wave_gpl.dll>
+  WriteINIStr "$INSTDIR\Plainamp.ini" "Plainamp" "OutputPluginActive___out_wave_gpl.dll" "1"
+  DetailPrint "Extract: Plainamp.ini... 100%"
+
   File "..\Binary\fftw3.dll"
   File "..\Binary\zlib1.dll"
   File "..\Changelog.txt"
@@ -142,6 +147,12 @@ Section "MainSection" SEC01
   Call OpenConfirmLookup
   IntCmp 0 $2 +2
   File "Instdir\Plugins\in_mad.dll"
+  Call CloseConfirmLookup
+
+  StrCpy $1 "out_wave_gpl.dll"
+  Call OpenConfirmLookup
+  IntCmp 0 $2 +2
+  File "Instdir\Plugins\out_wave_gpl.dll"
   Call CloseConfirmLookup
 
   Pop $2
@@ -252,6 +263,8 @@ Section Uninstall
   StrCpy $0 "$INSTDIR\Plugins"
 ; -------------------------------------
   StrCpy $1 "in_mad.dll"
+  Call un.DeleteRetryLookup
+  StrCpy $1 "out_wave_gpl.dll"
   Call un.DeleteRetryLookup
   StrCpy $1 "vis_plainbar.dll"
   Call un.DeleteRetry
