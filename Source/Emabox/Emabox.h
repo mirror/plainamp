@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 // ExtraMessageBox
 // 
 // Copyright © 2006  Sebastian Pipping <webmaster@hartwork.org>
@@ -7,14 +7,16 @@
 // 
 // This source code is released under the GNU General Public License (GPL).
 // See GPL.txt for details. Any non-GPL usage is strictly forbidden.
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////*/
 
 
 #ifndef EXTRA_MESSAGE_BOX_H
 #define EXTRA_MESSAGE_BOX_H 1
 
+#include "EmaboxConfig.h"
 #include <windows.h>
 #include <tchar.h>
+
 
 
 /*
@@ -29,8 +31,8 @@
 #define MB_CANCELTRYCONTINUE          6                                          0110
 */
 
-#define MB_YESNOCANCELALL             7                                       // 0111
-#define MB_YESNOALL                   8                                       // 1000
+#define MB_YESNOCANCELALL             7                                       /* 0111 */
+#define MB_YESNOALL                   8                                       /* 1000 */
 
 /*
 == ICON =============================================================================
@@ -53,8 +55,8 @@
 #define MB_DEFBUTTON4                 0x300                              001100000000
 */
 
-#define MB_DEFBUTTON5                 1024                            // 010000000000
-#define MB_DEFBUTTON6                 1280                            // 010100000000
+#define MB_DEFBUTTON5                 1024                            /* 010000000000 */
+#define MB_DEFBUTTON6                 1280                            /* 010100000000 */
 
 /*
 == MODE =============================================================================
@@ -82,33 +84,39 @@
 == EXTRA FLAGS ======================================================================
 */
 
-#define MB_EXTRAMASC                  0xF0000000  // 11110000000000000000000000000000
+#define MB_EXTRAMASC                  0xF0000000  /* 11110000000000000000000000000000 */
 
-#define MB_CHECKMASC                  0xC0000000  // 11000000000000000000000000000000
-#define MB_CHECKNONE                  0           // 00000000000000000000000000000000
-#define MB_CHECKNEVERAGAIN            0x40000000  // 01000000000000000000000000000000
-#define MB_CHECKREMEMBERCHOICE        0x80000000  // 10000000000000000000000000000000
+#define MB_CHECKMASC                  0xC0000000  /* 11000000000000000000000000000000 */
+#define MB_CHECKNONE                  0           /* 00000000000000000000000000000000 */
+#define MB_CHECKNEVERAGAIN            0x40000000  /* 01000000000000000000000000000000 */
+#define MB_CHECKREMEMBERCHOICE        0x80000000  /* 10000000000000000000000000000000 */
 
-#define MB_CLOSEMASK                  0x30000000  // 00110000000000000000000000000000
-#define MB_NORMALCLOSE                0           // 00000000000000000000000000000000
-#define MB_DISABLECLOSE               0x10000000  // 00010000000000000000000000000000
-#define MB_NOCLOSE                    0x20000000  // 00100000000000000000000000000000
+#define MB_CLOSEMASK                  0x30000000  /* 00110000000000000000000000000000 */
+#define MB_NORMALCLOSE                0           /* 00000000000000000000000000000000 */
+#define MB_DISABLECLOSE               0x10000000  /* 00010000000000000000000000000000 */
+#define MB_NOCLOSE                    0x20000000  /* 00100000000000000000000000000000 */
 
 
 
-// Function aliases
+/* Function aliases */
+#define ExtraMessageBoxLive      EmaBoxLive
+#define ExtraMessageBoxDie       EmaBoxDie
 #define ExtraMessageBox          EmaBox
 #define ExtraMessageBoxEx        EmaBoxEx
 #define ExtraMessageBoxIndirect  EmaBoxIndirect
 
 
 
+int EmaBoxLive();
+
+int EmaBoxDie();
+
 int EmaBox(
 	HWND hWnd,
 	LPCTSTR lpText,
 	LPCTSTR lpCaption,
 	UINT uType,
-	int * bCheckRes
+	int * pbCheckRes
 );
 
 int EmaBoxEx(
@@ -117,14 +125,14 @@ int EmaBoxEx(
 	LPCTSTR lpCaption,
 	UINT uType,
 	WORD wLanguageId,
-	int * bCheckRes
+	int * pbCheckRes
 );
 
 int EmaBoxIndirect(
 	const LPMSGBOXPARAMS lpMsgBoxParams,
-	int * bCheckRes
+	int * pbCheckRes
 );
 
 
 
-#endif // EXTRA_MESSAGE_BOX_H
+#endif /* EXTRA_MESSAGE_BOX_H */

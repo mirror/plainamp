@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 // ExtraMessageBox
 // 
 // Copyright © 2006  Sebastian Pipping <webmaster@hartwork.org>
@@ -7,7 +7,7 @@
 // 
 // This source code is released under the GNU General Public License (GPL).
 // See GPL.txt for details. Any non-GPL usage is strictly forbidden.
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////*/
 
 
 #ifndef EXTRA_MESSAGE_BOX_CONFIG_H
@@ -15,7 +15,10 @@
 
 
 
-// Allow overwriting message text
+/* Allow laziness */
+#define EMA_AUTOINIT
+
+/* Allow overwriting message text */
 #ifndef EMA_TEXT_NEVER_AGAIN
 # define EMA_TEXT_NEVER_AGAIN szNeverAgain
 #endif
@@ -26,4 +29,4 @@
 
 
 
-#endif // EXTRA_MESSAGE_BOX_CONFIG_H
+#endif /* EXTRA_MESSAGE_BOX_CONFIG_H */

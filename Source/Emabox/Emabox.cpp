@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 // ExtraMessageBox
 // 
 // Copyright © 2006  Sebastian Pipping <webmaster@hartwork.org>
@@ -7,7 +7,7 @@
 // 
 // This source code is released under the GNU General Public License (GPL).
 // See GPL.txt for details. Any non-GPL usage is strictly forbidden.
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////*/
 
 
 /*
@@ -29,53 +29,51 @@ MB_YESNOCANCEL
 
 
 #include "Emabox.h"
-#include "EmaboxConfig.h"
-#include <map>
 
-using namespace std;
+
+
+#define FUNCTION_NORMAL    0
+#define FUNCTION_EXTENDED  1
+#define FUNCTION_INDIRECT  2
 
 
 
 const int SPACE_UNDER_CHECKBOX  = 10;
 const int SPACE_EXTRA_BOTTOM    = 4;
 
-const TCHAR * const szNeverAgain      = TEXT( "Do not show again" );
-const TCHAR * const szRememberChoice  = TEXT( "Remember my choice" );
+TCHAR * const szNeverAgain      = TEXT( "Do not show again" );
+TCHAR * const szRememberChoice  = TEXT( "Remember my choice" );
+
+DWORD dwTlsSlot = TLS_OUT_OF_INDEXES;
+
+#ifdef EMA_AUTOINIT
+int bEmaInitDone = 0;
+#endif
 
 
 
-enum WhichOne
-{
-	Normal,
-	Extended,
-	Indirect
-};
-
-struct StructPowerBoxData
+struct StructEmaBoxData
 {
 	int * bCheckState;
-	HHOOK hCBT;                   // CBT hook handle
-	WNDPROC WndprocMsgBoxBackup;  // Old wndproc
-	UINT uType;                   // Message box type
-	HWND hCheck;                  // Checkbox handle
+	HHOOK hCBT;                   /* CBT hook handle */
+	WNDPROC WndprocMsgBoxBackup;  /* Old wndproc */
+	UINT uType;                   /* Message box type */
+	HWND hCheck;                  /* Checkbox handle */
 };
 
-typedef struct StructPowerBoxData PowerBoxData;
+typedef struct StructEmaBoxData EmaBoxData;
 
 
 
-map<DWORD, PowerBoxData *> thread_to_data;
-
-
-
-void ScreenToClient( HWND h, RECT * r )
+void RectScreenToClient( const HWND h, RECT * const r )
 {
 	POINT p;
+	RECT after;
+
 	p.x = r->left;
 	p.y = r->top;
 	ScreenToClient( h, &p );
 	
-	RECT after;
 	after.left    = p.x;
 	after.right   = p.x + r->right - r->left;
 	after.top     = p.y;
@@ -88,12 +86,8 @@ void ScreenToClient( HWND h, RECT * r )
 
 LRESULT CALLBACK WndprocMsgBox( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
-	// Find data
-	PowerBoxData * data;
-	const DWORD dwCurThread = GetCurrentThreadId();
-	const map<DWORD, PowerBoxData *>::iterator iter = thread_to_data.find( dwCurThread );
-	if( iter == thread_to_data.end() ) return 0;
-	data = iter->second;
+	/* Find data */
+	EmaBoxData * const data = ( EmaBoxData * )TlsGetValue( dwTlsSlot );
 	
 	switch( message )
 	{
@@ -102,87 +96,108 @@ LRESULT CALLBACK WndprocMsgBox( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 		{
 			if( !data->hCheck || ( ( HWND )lp != data->hCheck ) ) break;
 			
-			const LRESULT res = SendMessage( ( HWND )lp, BM_GETSTATE, 0, 0 );
-			const bool bCheckedAfter = ( ( res & BST_CHECKED ) == 0 );
-			
-			// Update external variable
-			*( data->bCheckState ) = bCheckedAfter ? 1 : 0;
-			
-			SendMessage( ( HWND )lp, BM_SETCHECK, ( bCheckedAfter ) ? BST_CHECKED : 0, 0 );
+			{
+				const LRESULT res = SendMessage( ( HWND )lp, BM_GETSTATE, 0, 0 );
+				const int bCheckedAfter = ( ( res & BST_CHECKED ) == 0 );
+				
+				/* Update external variable */
+				*( data->bCheckState ) = bCheckedAfter ? 1 : 0;
+				
+				SendMessage( ( HWND )lp, BM_SETCHECK, ( bCheckedAfter ) ? BST_CHECKED : 0, 0 );
+			}
 		}
 		break;
 		
 	case WM_INITDIALOG:
 		{
-			// Add checkbox
+			/* Add checkbox */
 			if( ( data->uType & MB_CHECKMASC ) != 0 )
 			{
-				// Get original window dimensions
-				RECT rw;
+				int SPACE_OVER_CHECKBOX;
+				HDC hdc;
+				RECT rw;                 /* Window rect     */
+				RECT rc;                 /* Client rect     */
+				HWND hText;              /* Message handle  */
+				RECT rt;                 /* Message rect    */
+				int iLabelHeight;
+				TCHAR * szCheckboxLabel;  /* Checkbox label */
+
+				int iWindowWidthBefore;
+				int iWindowHeightBefore;
+				int iClientWidthBefore;
+				int iClientHeightBefore;
+				int iNeverAgainWidth;
+				int iNeverAgainHeight;
+
+
+
+				/* Get original window dimensions */
 				GetWindowRect( hwnd, &rw );
-				const int iWindowWidthBefore   = rw.right - rw.left;
-				const int iWindowHeightBefore  = rw.bottom - rw.top;
+				iWindowWidthBefore   = rw.right - rw.left;
+				iWindowHeightBefore  = rw.bottom - rw.top;
 
-				RECT rc;
 				GetClientRect( hwnd, &rc );
-				const int iClientWidthBefore   = rc.right - rc.left;
-				const int iClientHeightBefore  = rc.bottom - rc.top;
+				iClientWidthBefore   = rc.right - rc.left;
+				iClientHeightBefore  = rc.bottom - rc.top;
 
 
-
-				// Find handle of the text label
-				HWND hText = NULL;
 				
-				const HWND hFirstStatic = FindWindowEx( hwnd, NULL, TEXT( "STATIC" ), NULL );
-				if( !hFirstStatic ) break;
-				
-				const HWND hSecondStatic = FindWindowEx( hwnd, hFirstStatic, TEXT( "STATIC" ), NULL );
-				if( !hSecondStatic )
 				{
-					// Only one static means no icon.
-					// So hFirstStatic must be the text window.
+					/* Find handle of the text label */
+					HWND hFirstStatic;
+					HWND hSecondStatic;
+
+					hFirstStatic = FindWindowEx( hwnd, NULL, TEXT( "STATIC" ), NULL );
+					if( !hFirstStatic ) break;
 					
-					hText = hFirstStatic;
-				}
-				else
-				{
-					TCHAR szBuf[ 2 ] = TEXT( "" );
-					if( !GetWindowText( hSecondStatic, szBuf, 2 ) ) break;
-					
-					if( *szBuf != TEXT( '\0' ) )
+					hSecondStatic = FindWindowEx( hwnd, hFirstStatic, TEXT( "STATIC" ), NULL );
+					if( !hSecondStatic )
 					{
-						// Has text so it must be the label
-						hText = hSecondStatic;
+						/* Only one static means no icon. */
+						/* So hFirstStatic must be the text window. */
+						hText = hFirstStatic;
 					}
 					else
 					{
-						hText = hFirstStatic;
+						TCHAR szBuf[ 2 ] = TEXT( "" );
+						if( !GetWindowText( hSecondStatic, szBuf, 2 ) ) break;
+						
+						if( *szBuf != TEXT( '\0' ) )
+						{
+							/* Has text so it must be the label */
+							hText = hSecondStatic;
+						}
+						else
+						{
+							hText = hFirstStatic;
+						}
 					}
 				}
 				
-				RECT rt;
 				GetWindowRect( hText, &rt );
-				ScreenToClient( hwnd, &rt );
+				RectScreenToClient( hwnd, &rt );
 				
-				const int iLabelHeight = rt.bottom - rt.top;
+				iLabelHeight = rt.bottom - rt.top;
 
+				{
+					/* Get distance between label and the buttons */
+					HWND hAnyButton;
+					RECT rab;
 
+					hAnyButton = FindWindowEx( hwnd, NULL, TEXT( "BUTTON" ), NULL );
+					if( !hAnyButton ) break;
+					
+					GetWindowRect( hAnyButton, &rab );
+					RectScreenToClient( hwnd, &rab );
+					
+					SPACE_OVER_CHECKBOX = rab.top - rt.bottom;
+				}
 
-				// Get distance between label and the buttons
-				const HWND hAnyButton = FindWindowEx( hwnd, NULL, TEXT( "BUTTON" ), NULL );
-				if( !hAnyButton ) break;
-				
-				RECT rab;
-				GetWindowRect( hAnyButton, &rab );
-				ScreenToClient( hwnd, &rab );
-				
-				const int SPACE_OVER_CHECKBOX = rab.top - rt.bottom;
+				szCheckboxLabel =	( data->uType & MB_CHECKNEVERAGAIN )
+									? EMA_TEXT_NEVER_AGAIN
+									: EMA_TEXT_REMEMBER_CHOICE;
 
-				const TCHAR * const szCheckboxLabel =	( data->uType & MB_CHECKNEVERAGAIN )
-														? EMA_TEXT_NEVER_AGAIN
-														: EMA_TEXT_REMEMBER_CHOICE;
-
-				// Add checkbox
+				/* Add checkbox */
 				data->hCheck = CreateWindow(
 					TEXT( "BUTTON" ),
 					szCheckboxLabel,
@@ -202,30 +217,29 @@ LRESULT CALLBACK WndprocMsgBox( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				);
 				
 				
-				// Set initial check state
+				/* Set initial check state */
 				SendMessage( data->hCheck, BM_SETCHECK, *( data->bCheckState ) ? BST_CHECKED : 0, 0 );
 				
-				// Apply default font
-				const HFONT hNewFont = ( HFONT )GetStockObject( DEFAULT_GUI_FONT );
-				SendMessage( data->hCheck, WM_SETFONT, ( WPARAM )hNewFont, ( LPARAM )TRUE );
-				
-				const HDC hdc = GetDC( data->hCheck );
-				SIZE size;
-				const HFONT hOldFont = ( HFONT )SelectObject( hdc, GetStockObject( DEFAULT_GUI_FONT ) );
-				GetTextExtentPoint32( hdc, szCheckboxLabel, _tcslen( szCheckboxLabel ), &size );
-				SelectObject( hdc, hOldFont );
-				ReleaseDC( data->hCheck, hdc );
-				
-				const int cyMenuSize         = GetSystemMetrics( SM_CYMENUSIZE );
-				const int cxMenuSize         = GetSystemMetrics( SM_CXMENUSIZE );
+				{
+					/* Apply default font */
+					const int cyMenuSize  = GetSystemMetrics( SM_CYMENUSIZE );
+					const int cxMenuSize  = GetSystemMetrics( SM_CXMENUSIZE );
+					const HFONT hNewFont  = ( HFONT )GetStockObject( DEFAULT_GUI_FONT );
+					HFONT hOldFont;
+					SIZE size;
 
-				const int iNeverAgainWidth   = cxMenuSize + size.cx + 1;
-				const int iNeverAgainHeight  = ( cyMenuSize > size.cy ) ? cyMenuSize : size.cy;
-				
-				RECT rna;
-				GetWindowRect( data->hCheck, &rna );
-				ScreenToClient( hwnd, &rna );
-				
+					SendMessage( data->hCheck, WM_SETFONT, ( WPARAM )hNewFont, ( LPARAM )TRUE );
+					
+					hdc = GetDC( data->hCheck );
+					hOldFont = ( HFONT )SelectObject( hdc, GetStockObject( DEFAULT_GUI_FONT ) );
+					GetTextExtentPoint32( hdc, szCheckboxLabel, _tcslen( szCheckboxLabel ), &size );
+					SelectObject( hdc, hOldFont );
+					ReleaseDC( data->hCheck, hdc );
+
+					iNeverAgainWidth   = cxMenuSize + size.cx + 1;
+					iNeverAgainHeight  = ( cyMenuSize > size.cy ) ? cyMenuSize : size.cy;
+				}
+
 				MoveWindow(
 					data->hCheck,
 					( iClientWidthBefore - ( iNeverAgainWidth ) ) / 2,
@@ -235,36 +249,34 @@ LRESULT CALLBACK WndprocMsgBox( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 					FALSE
 				);
 
-				
-				
-				// Move all buttons down (except the checkbox)
-				const int iDistance = iNeverAgainHeight + SPACE_UNDER_CHECKBOX;
-				HWND hLastButton = NULL;
-				for( ; ; )
 				{
-					hLastButton = FindWindowEx( hwnd, hLastButton, TEXT( "BUTTON" ), NULL );
-					if( !hLastButton ) break;
-					if( hLastButton == data->hCheck ) continue;
-					
+					/* Move all buttons down (except the checkbox) */
+					const int iDistance = iNeverAgainHeight + SPACE_UNDER_CHECKBOX;
+					HWND hLastButton = NULL;
 					RECT rb;
-					GetWindowRect( hLastButton, &rb );
-					ScreenToClient( hwnd, &rb );
+					for( ; ; )
+					{
+						hLastButton = FindWindowEx( hwnd, hLastButton, TEXT( "BUTTON" ), NULL );
+						if( !hLastButton ) break;
+						if( hLastButton == data->hCheck ) continue;
+						
+						GetWindowRect( hLastButton, &rb );
+						RectScreenToClient( hwnd, &rb );
 
-					MoveWindow( hLastButton, rb.left, rb.top + iDistance, rb.right - rb.left, rb.bottom - rb.top, FALSE );
+						MoveWindow( hLastButton, rb.left, rb.top + iDistance, rb.right - rb.left, rb.bottom - rb.top, FALSE );
+					}
+
+
+					/* Enlarge dialog */
+					MoveWindow( hwnd, rw.left, rw.top, iWindowWidthBefore, iWindowHeightBefore + iDistance + SPACE_EXTRA_BOTTOM, FALSE );
 				}
-
-
-				// Enlarge dialog
-				MoveWindow( hwnd, rw.left, rw.top, iWindowWidthBefore, iWindowHeightBefore + iDistance + SPACE_EXTRA_BOTTOM, FALSE );
 			}
 			else
 			{
 				data->hCheck = NULL;
 			}
 			
-
-			
-			// Modify close button
+			/* Modify close button */
 			switch( data->uType & MB_CLOSEMASK )
 			{
 			case MB_DISABLECLOSE:
@@ -291,34 +303,22 @@ LRESULT CALLBACK WndprocMsgBox( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 }	
 
 
-// bool bFound = false;
 
-//////////////////////////////////////////////////////////////////////////////// 
-/// 
-//////////////////////////////////////////////////////////////////////////////// 
+/* int bFound = 0; */
+
 LRESULT CALLBACK HookprocMsgBox( int code, WPARAM wp, LPARAM lp )
 {
-	// Get hook handle
-	PowerBoxData * data;
-	const DWORD dwCurThread = GetCurrentThreadId();
-	const map<DWORD, PowerBoxData *>::iterator iter = thread_to_data.find( dwCurThread );
-	if( iter != thread_to_data.end() )
-	{
-		data = iter->second;
-	}
-	else
-	{
-		return 0;
-	}
+	/* Get hook handle */
+	EmaBoxData * const data = ( EmaBoxData * )TlsGetValue( dwTlsSlot );
 	
 	if( code == HCBT_CREATEWND )
 	{
-		// MSDN says WE CANNOT TRUST "CBT_CREATEWND"
-		// so we use only the window handle
-		// and get the class name using "GetClassName". (-> Q106079)
+		/* MSDN says WE CANNOT TRUST "CBT_CREATEWND"                 */
+		/* so we use only the window handle                          */
+		/* and get the class name using "GetClassName". (-> Q106079) */
 		HWND hwnd = ( HWND )wp;
 
-		// Check windowclass
+		/* Check windowclass */
 		TCHAR szClass[ 7 ] = TEXT( "" );
 		GetClassName( hwnd, szClass, 7 );
 		if( !_tcscmp( szClass, TEXT( "#32770" ) ) )
@@ -329,9 +329,9 @@ LRESULT CALLBACK HookprocMsgBox( int code, WPARAM wp, LPARAM lp )
 				return CallNextHookEx( hCBT, code, wp, lp );
 			}
 			
-			bFound = true;
+			bFound = 1;
 */			
-			// Exchange window procedure
+			/* Exchange window procedure */
 			data->WndprocMsgBoxBackup = ( WNDPROC )GetWindowLong( hwnd, GWL_WNDPROC );
 			if( data->WndprocMsgBoxBackup != NULL )
 			{
@@ -344,87 +344,112 @@ LRESULT CALLBACK HookprocMsgBox( int code, WPARAM wp, LPARAM lp )
 
 
 
-inline int ExtraAllTheSame( HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType, WORD wLanguageId, LPMSGBOXPARAMS lpMsgBoxParams, int * bCheckRes, WhichOne function )
+int ExtraAllTheSame( const HWND hWnd, const LPCTSTR lpText, const LPCTSTR lpCaption, const UINT uType, const WORD wLanguageId, const LPMSGBOXPARAMS lpMsgBoxParams, int * const pbCheckRes, const int iFunction )
 {
-	// Add entry to map
-	const DWORD dwCurThread = GetCurrentThreadId();
-	PowerBoxData * const data = new PowerBoxData;
-	data->bCheckState  = bCheckRes;
-	data->uType        = ( function != Indirect ) ? uType : lpMsgBoxParams->dwStyle;
-	thread_to_data.insert( pair<DWORD, PowerBoxData *>( dwCurThread, data ) );
-	
-	// Setup this-thread-only hook
-	const HHOOK g_hCBT = SetWindowsHookEx( WH_CBT, &HookprocMsgBox, GetModuleHandle( NULL ), dwCurThread );
-
+	EmaBoxData * data;
+	HHOOK hCBT;
 	int res;
-	switch( function )
+
+#ifdef EMA_AUTOINIT
+	if( !bEmaInitDone )
 	{
-	case Normal:
+		EmaBoxLive();
+		bEmaInitDone = 1;
+	}
+#endif
+
+	/* Create thread data */
+	data = ( EmaBoxData * )LocalAlloc( NONZEROLPTR, sizeof( EmaBoxData ) );
+	TlsSetValue( dwTlsSlot, data );
+	data->bCheckState  = pbCheckRes;
+	data->uType        = ( iFunction != FUNCTION_INDIRECT ) ? uType : lpMsgBoxParams->dwStyle;
+	
+	/* Setup this-thread-only hook */
+	hCBT = SetWindowsHookEx( WH_CBT, &HookprocMsgBox, GetModuleHandle( NULL ), GetCurrentThreadId() );
+
+	switch( iFunction )
+	{
+	case FUNCTION_NORMAL:
 		res = MessageBox( hWnd, lpText, lpCaption, uType );
 		break;
 
-	case Extended:
+	case FUNCTION_EXTENDED:
 		res = MessageBoxEx( hWnd, lpText, lpCaption, uType, wLanguageId );
 		break;
 
-	case Indirect:
+	case FUNCTION_INDIRECT:
 		res = MessageBoxIndirect( lpMsgBoxParams );
 		break;
 
 	}
 
-	// Remove hook
-	if( g_hCBT != NULL ) UnhookWindowsHookEx( g_hCBT );
+	/* Remove hook */
+	if( hCBT != NULL ) UnhookWindowsHookEx( hCBT );
 
-	// Remove entry from map
-	const map<DWORD, PowerBoxData *>::iterator iter = thread_to_data.find( dwCurThread );
-	if( iter != thread_to_data.end() )
-	{
-		thread_to_data.erase( iter );
-	}
-	delete data;
-	
+	/* Destroy thread data */
+	LocalFree( ( HLOCAL )data );
+
 	return res;
 }
 
 
 
-int EmaBox( HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType, int * bCheckRes )
+int EmaBox( HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType, int * pbCheckRes )
 {
-	// Check extra flags
+	/* Check extra flags */
 	if( ( uType & MB_EXTRAMASC ) == 0 )
 	{
-		// No extra
+		/* No extra */
 		return MessageBox( hWnd, lpText, lpCaption, uType );
 	}
 	
-	return ExtraAllTheSame( hWnd, lpText, lpCaption, uType, 0, NULL, bCheckRes, Normal );
+	return ExtraAllTheSame( hWnd, lpText, lpCaption, uType, 0, NULL, pbCheckRes, FUNCTION_NORMAL );
 }
 
 
 
-int EmaBoxEx( HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType, WORD wLanguageId, int * bCheckRes )
+int EmaBoxEx( HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType, WORD wLanguageId, int * pbCheckRes )
 {
-	// Check extra flags
+	/* Check extra flags */
 	if( ( uType & MB_EXTRAMASC ) == 0 )
 	{
-		// No extra
+		/* No extra */
 		return MessageBoxEx( hWnd, lpText, lpCaption, uType, wLanguageId );
 	}
 	
-	return ExtraAllTheSame( hWnd, lpText, lpCaption, uType, wLanguageId, NULL, bCheckRes, Extended );
+	return ExtraAllTheSame( hWnd, lpText, lpCaption, uType, wLanguageId, NULL, pbCheckRes, FUNCTION_EXTENDED );
 }
 
 
 
-int EmaBoxIndirect( const LPMSGBOXPARAMS lpMsgBoxParams, int * bCheckRes )
+int EmaBoxIndirect( const LPMSGBOXPARAMS lpMsgBoxParams, int * pbCheckRes )
 {
-	// Check extra flags
+	/* Check extra flags */
 	if( ( lpMsgBoxParams->dwStyle & MB_EXTRAMASC ) == 0 )
 	{
-		// No extra
+		/* No extra */
 		return MessageBoxIndirect( lpMsgBoxParams );
 	}
 	
-	return ExtraAllTheSame( NULL, NULL, NULL, 0, 0, lpMsgBoxParams, bCheckRes, Indirect );
+	return ExtraAllTheSame( NULL, NULL, NULL, 0, 0, lpMsgBoxParams, pbCheckRes, FUNCTION_INDIRECT );
+}
+
+
+
+int EmaBoxLive()
+{
+	dwTlsSlot = TlsAlloc();
+	if( dwTlsSlot == TLS_OUT_OF_INDEXES ) return 0;
+	
+	return 1;
+}
+
+
+
+int EmaBoxDie()
+{
+	if( dwTlsSlot == TLS_OUT_OF_INDEXES ) return 0;
+
+	TlsFree( dwTlsSlot );
+	return 1;
 }
