@@ -19,6 +19,7 @@
    [+] Pan slider invert option introduced (see Plainamp.ini)
    [+] Seekbar keypress forwarding
    [+] Better handling of playback with no active output plugin
+   [+] Missing plugins warning can now be turned off
 
 --------------------------------------------------------------------------------
    0.1.9                                                           2005-12-23

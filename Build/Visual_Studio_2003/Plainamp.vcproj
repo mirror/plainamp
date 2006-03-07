@@ -140,6 +140,9 @@
 				RelativePath="..\..\Source\DspPlugin.cpp">
 			</File>
 			<File
+				RelativePath="..\..\Source\Emabox\Emabox.cpp">
+			</File>
+			<File
 				RelativePath="..\..\Source\Embed.cpp">
 			</File>
 			<File
@@ -245,6 +248,12 @@
 			</File>
 			<File
 				RelativePath="..\..\Source\DspPlugin.h">
+			</File>
+			<File
+				RelativePath="..\..\Source\Emabox\Emabox.h">
+			</File>
+			<File
+				RelativePath="..\..\Source\Emabox\EmaboxConfig.h">
 			</File>
 			<File
 				RelativePath="..\..\Source\Embed.h">

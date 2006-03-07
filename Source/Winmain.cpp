@@ -25,6 +25,9 @@
 #include "Prefs.h"
 #include "Config.h"
 
+#include "Emabox/Emabox.h"
+
+
 
 #define PLUS_ALT            ( FVIRTKEY | FALT )
 #define PLUS_CONTROL        ( FVIRTKEY | FCONTROL )
@@ -46,6 +49,10 @@ int     iPluginDirLen = 0; // extern
 
 TCHAR szCurDir[ MAX_PATH + 1 ] = TEXT( "" );
 ConfCurDir ccdCurDir( szCurDir, TEXT( "CurDir" ) );
+
+
+bool bWarnPluginsMissing;
+ConfBool cbWarnPluginsMissing( &bWarnPluginsMissing, TEXT( "WarnPluginsMissing" ), CONF_MODE_PUBLIC, true );
 
 
 
@@ -101,37 +108,48 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdSho
 
 	// Check plugin presence
 	// One msgbox maximum
-	if( input_plugins.empty() )
+	if( bWarnPluginsMissing )
 	{
-		// No input plugins
-		TCHAR szBuffer[ 5000 ];
-		_stprintf(
-			szBuffer,
-			TEXT(
-				"No input plugins were found.\n"
-				"\n"
-				"Please install at least one Winamp input plugin to  \n"
-				"%s  "
-			),
-			szPluginDir
-		);
-		MessageBox( 0, szBuffer, TEXT( "Input plugins missing" ), MB_ICONEXCLAMATION );
-	}
-	else if( output_plugins.empty() )
-	{
-		// No output plugins
-		TCHAR szBuffer[ 5000 ];
-		_stprintf(
-			szBuffer,
-			TEXT(
-				"No output plugins were found.\n"
-				"\n"
-				"Please install at least one Winamp output plugin to  \n"
-				"%s  "
-			),
-			szPluginDir
-		);
-		MessageBox( 0, szBuffer, TEXT( "Output plugins missing" ), MB_ICONEXCLAMATION );
+		
+		
+		if( input_plugins.empty() )
+		{
+			// No input plugins
+			TCHAR szBuffer[ 5000 ];
+			_stprintf(
+				szBuffer,
+				TEXT(
+					"No input plugins were found.\n"
+					"\n"
+					"Please install at least one Winamp input plugin to  \n"
+					"%s  "
+				),
+				szPluginDir
+			);
+			
+			int iNeverAgain = bWarnPluginsMissing ? 0 : 1;
+			EmaBox( 0, szBuffer, TEXT( "Input plugins missing" ), MB_ICONEXCLAMATION | MB_CHECKNEVERAGAIN, &iNeverAgain );
+			bWarnPluginsMissing = ( iNeverAgain == 0 );
+		}
+		else if( output_plugins.empty() )
+		{
+			// No output plugins
+			TCHAR szBuffer[ 5000 ];
+			_stprintf(
+				szBuffer,
+				TEXT(
+					"No output plugins were found.\n"
+					"\n"
+					"Please install at least one Winamp output plugin to  \n"
+					"%s  "
+				),
+				szPluginDir
+			);
+			
+			int iNeverAgain = bWarnPluginsMissing ? 0 : 1;
+			EmaBox( 0, szBuffer, TEXT( "Output plugins missing" ), MB_ICONEXCLAMATION | MB_CHECKNEVERAGAIN, &iNeverAgain );
+			bWarnPluginsMissing = ( iNeverAgain == 0 );
+		}
 	}
 
 
