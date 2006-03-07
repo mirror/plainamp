@@ -3,7 +3,7 @@
    http://sourceforge.net/projects/plainamp/
 
 --------------------------------------------------------------------------------
-   0.2.1                                                           ???
+   0.2.1                                                           2006-03-07
 --------------------------------------------------------------------------------
 
    [+] Now bundled with MAD MP3 Decoder and GPL waveOut Plugin
@@ -20,6 +20,8 @@
    [+] Seekbar keypress forwarding
    [+] Better handling of playback with no active output plugin
    [+] Missing plugins warning can now be turned off
+
+   [*] Playlist related bugs fixed
 
 --------------------------------------------------------------------------------
    0.1.9                                                           2005-12-23

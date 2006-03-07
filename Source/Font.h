@@ -25,6 +25,7 @@ namespace Font
 	bool Destroy();
 
 	bool Apply( HWND hwnd );
+	HFONT Get();
 };
 
 

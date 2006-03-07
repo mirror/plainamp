@@ -1053,6 +1053,9 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 			}
 			else
 			{
+				// Skip initial so we don't get a double backslash in between
+				while( ( beg[ 0 ] == '\\' ) && ( beg < end ) ) beg++;
+				
 				// Relative path
 				const int iSecondLen = end - beg;
 				szKeep = new TCHAR[ iBaseDirLen + iSecondLen + 1 ];

@@ -12,6 +12,7 @@
 
 #include "PlaylistControler.h"
 #include "Config.h"
+#include "Font.h"
 
 bool bPlaylistFollow;
 ConfBool cbPlaylistFollow( &bPlaylistFollow, TEXT( "PlaylistFollow" ), CONF_MODE_PUBLIC, true );
@@ -153,7 +154,9 @@ bool PlaylistControler::FixDigitsMore()
 		_iDigits++;                        //  2 ->   3
 	}
 	
-	return ( _iDigits != iDigitsBefore );
+	
+	return ( ( _iDigits != iDigitsBefore )
+		|| ( iCountAfter == 1 ) ); // Force update when first item is inserted
 }
 
 // Returns <true> on digit count change
@@ -187,11 +190,13 @@ PlaylistControler::PlaylistControler( HWND hView, bool bEnableZeroPadding, int *
 	_hView = hView;
 	
 	_bZeroPadding = bEnableZeroPadding;
-	_iDigits = 1;
-	_iDigitMin = 1;
-	_iDigitMax = 9;
+	_iDigits    = 1;
+	_iDigitMin  = 1;
+	_iDigitMax  = 9;
 	
 	_database.SetCurIndexSlave( piIndexSlave );
+	
+	Refresh();
 	
 	// TODO clear list view here???
 }
@@ -201,11 +206,6 @@ void PlaylistControler::PushBack( TCHAR * szText )
 {
 	const int iSize = _database.GetMaxIndex();
 
-	/*
-	LVITEM item;
-	int ListView_InsertItem( _hView, &item );
-	*/
-	
 	_database.PushBack( szText );
 	ListView_SetItemCount( _hView, _database.GetSize() );
 	
@@ -216,11 +216,6 @@ void PlaylistControler::Insert( int i, TCHAR * szText )
 {
 	const int iSize = _database.GetMaxIndex();
 
-	/*
-	LVITEM item;
-	int ListView_InsertItem( _hView, &item );
-	*/
-	
 	_database.Insert( i, szText );
 	ListView_SetItemCount( _hView, _database.GetSize() );
 	
@@ -419,8 +414,10 @@ void PlaylistControler::AutosizeColumns()
 	else
 	{
 		HDC hdc = GetDC( _hView );
+		const HFONT hOldFont = ( HFONT )SelectObject( hdc, Font::Get() );
 		SIZE size;
 		BOOL res = GetTextExtentPoint32( hdc, TEXT( "0" ), 1, &size );
+		SelectObject( hdc, hOldFont );
 		ReleaseDC( _hView, hdc );
 		const int iWidth = res ? ( int )( size.cx * ( _iDigits + 0.25f ) ) : 120;
 		ListView_SetColumnWidth( _hView, 0, iWidth );
