@@ -122,6 +122,7 @@ Section "MainSection" SEC01
   SetOverwrite ifnewer
 
   File "..\Binary\Plainamp.exe"
+  File "Instdir\Plainamp.exe.manifest"
 
   ; Create ini and activate <out_wave_gpl.dll>
   WriteINIStr "$INSTDIR\Plainamp.ini" "Plainamp" "OutputPluginActive___out_wave_gpl.dll" "1"
@@ -242,6 +243,8 @@ Section Uninstall
   StrCpy $0 "$INSTDIR"
 ; -------------------------------------
   StrCpy $1 "Plainamp.exe"
+  Call un.DeleteRetry
+  StrCpy $1 "Plainamp.exe.manifest"
   Call un.DeleteRetry
   StrCpy $1 "Plainamp.ini"
   Call un.DeleteRetry
