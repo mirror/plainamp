@@ -346,7 +346,31 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 					playlist->Fill( lpdi->item );
 				}
 				return 0;
-				
+/*				
+			case LVN_ODCACHEHINT:
+				{
+					LPNMLVCACHEHINT   lpCacheHint = (LPNMLVCACHEHINT)lParam;
+					/
+					This sample doesn't use this notification, but this is sent when the 
+					ListView is about to ask for a range of items. On this notification, 
+					you should load the specified items into your local cache. It is still 
+					possible to get an LVN_GETDISPINFO for an item that has not been cached, 
+					therefore, your application must take into account the chance of this 
+					occurring.
+					/
+				}
+				return 0;
+
+			case LVN_ODFINDITEM:
+				{
+					LPNMLVFINDITEM lpFindItem = (LPNMLVFINDITEM)lParam;
+					/
+					This sample doesn't use this notification, but this is sent when the 
+					ListView needs a particular item. Return -1 if the item is not found.
+					/
+				}
+				return 0;
+*/				
 			case NM_CUSTOMDRAW:
 				{
 					NMLVCUSTOMDRAW * custom = ( NMLVCUSTOMDRAW * )lp;
