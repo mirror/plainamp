@@ -77,7 +77,7 @@ OutFile "plainamp_setup.exe"
 InstallDir "$PROGRAMFILES\Plainamp"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ShowInstDetails show
-ShowUnInstDetails show
+ShowUninstDetails show
 
 
 Var /GLOBAL bDelete
