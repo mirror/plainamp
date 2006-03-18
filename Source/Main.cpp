@@ -323,15 +323,17 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 
 	static bool bRemoveIcon = false;
 
-
-
 	switch( message )
 	{
+	case WM_SETFOCUS:
+		// To re-"blue"
+		SetFocus( WindowPlaylist );
+		break;
+
 	case WM_CREATE:
 		// Note: [WindowMain] is not valid yet but [hwnd] is!
 		Console::Create();
 		PluginManager::Build();
-		
 		break;
 
 	case WM_NOTIFY:
@@ -690,7 +692,7 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			if( bConsoleVisible ) BringWindowToTop( WindowConsole );
 			if( bManagerVisible ) BringWindowToTop( WindowManager );
 			if( bMainTodo       ) BringWindowToTop( WindowMain    );
-
+			
 			break;
 		}
 
