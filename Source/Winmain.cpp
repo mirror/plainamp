@@ -156,6 +156,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdSho
 	// Todo: all the rest...
 	ACCEL accels[] = {
 		{ PLUS_CONTROL,        'A',        ID_PE_SELECTALL },       // [Ctrl] + [A]
+		{ PLUS_CONTROL,        'I',        ID_PE_INVERT },          // [Ctrl] + [I]
 		{ PLUS_CONTROL,        'N',        ID_PE_NEW },             // [Ctrl] + [N]
 		{ PLUS_CONTROL,        'O',        ID_PE_OPEN },            // [Ctrl] + [O]
 		{ PLUS_CONTROL,        'P',        WINAMP_OPTIONS_PREFS },  // [Ctrl] + [P]

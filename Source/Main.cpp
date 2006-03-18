@@ -143,6 +143,8 @@ bool BuildMainWindow()
 	HMENU windows_menu   = CreatePopupMenu();
 
 	// Plainamp
+	AppendMenu( plainamp_menu, MF_STRING, WINAMP_OPTIONS_PREFS, TEXT( "Preferences   \tCtrl+P" ) );
+	AppendMenu( plainamp_menu, MF_SEPARATOR | MF_DISABLED | MF_GRAYED, ( UINT_PTR )-1, NULL );
 	AppendMenu( plainamp_menu, MF_STRING, WINAMP_HELP_ABOUT, TEXT( "&About" ) );
 	AppendMenu( plainamp_menu, MF_STRING, WINAMP_FILE_QUIT, TEXT( "&Exit       \tAlt+F4" ) );
 
@@ -166,6 +168,7 @@ bool BuildMainWindow()
 	AppendMenu( playlist_menu, MF_SEPARATOR | MF_DISABLED | MF_GRAYED, ( UINT_PTR )-1, NULL );
 	AppendMenu( playlist_menu, MF_STRING, ID_PE_SELECTALL, TEXT( "Select &all\tCtrl+A" ) );
 	AppendMenu( playlist_menu, MF_STRING, ID_PE_NONE, TEXT( "Select &zero" ) );
+	AppendMenu( playlist_menu, MF_STRING, ID_PE_INVERT, TEXT( "Select &invert\tCtrl+I" ) );
 
 	// Windows
 	AppendMenu( windows_menu, MF_STRING, MENU_MAIN_WINDOWS_CONSOLE, TEXT( "&Console" ) );

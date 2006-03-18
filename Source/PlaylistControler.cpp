@@ -305,16 +305,30 @@ void PlaylistControler::RemoveSelected( bool bPositive )
 	if( bRefresh ) Refresh();
 }
 
-void PlaylistControler::SelectAll()
+void PlaylistControler::SelectAll( bool bPositive )
 {
-	// TODO test
-	ListView_SetItemState( _hView, ( UINT )-1, LVIS_SELECTED, LVIS_SELECTED );
+	ListView_SetItemState( _hView, ( UINT )-1, bPositive ? LVIS_SELECTED : 0, LVIS_SELECTED );
 }
 
-void PlaylistControler::SelectZero()
+void PlaylistControler::SelectInvert()
 {
-	// TODO test
-	ListView_SetItemState( _hView, ( UINT )-1, 0, LVIS_SELECTED );
+	SendMessage( _hView, WM_SETREDRAW, FALSE, 0 );
+
+	const int iOneTooMuch = _database.GetSize();
+	for( int i = 0; i < iOneTooMuch; i++ )
+	{
+		ListView_SetItemState(
+			_hView,
+			i,
+			( ListView_GetItemState( _hView, i, LVIS_SELECTED ) == LVIS_SELECTED )
+				? 0
+				: LVIS_SELECTED,
+			LVIS_SELECTED
+		);
+
+	}
+	
+	SendMessage( _hView, WM_SETREDRAW, TRUE, 0 );
 }
 
 const TCHAR * PlaylistControler::Get( int i )

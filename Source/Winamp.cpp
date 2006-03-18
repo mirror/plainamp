@@ -218,13 +218,15 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			break;
 
 		case ID_PE_SELECTALL:
-			playlist->SelectAll();
+			playlist->SelectAll( true );
 			break;
-/*
-		case ID_PE_INVERT: break;
-*/
+
+		case ID_PE_INVERT:
+			playlist->SelectInvert();
+			break;
+
 		case ID_PE_NONE:
-			playlist->SelectZero();
+			playlist->SelectAll( false );
 			break;
 /*
 		case ID_PE_ID3: break;

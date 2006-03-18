@@ -6,7 +6,11 @@
    0.2.2                                                           ???
 --------------------------------------------------------------------------------
 
-   [+] XP manifest added
+   [+] Windows XP manifest added
+   [+] Missing "Preferences" entry added to main menu
+   [+] Invert selection added
+
+   [*] Better focus handling
 
 --------------------------------------------------------------------------------
    0.2.1                                                           2006-03-07

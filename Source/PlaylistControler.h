@@ -52,8 +52,8 @@ public:
 	void Insert( int i, TCHAR * szText );
 	void RemoveAll();
 	void RemoveSelected( bool bPositive );
-	void SelectAll();
-	void SelectZero();
+	void SelectAll( bool bPositive );
+	void SelectInvert();
 
 	const TCHAR * Get( int i );
 	
