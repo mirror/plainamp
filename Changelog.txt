@@ -10,6 +10,7 @@
    [+] Missing "Preferences" entry added to main menu
    [+] Invert selection added
 
+   [*] Fixed: DSP stacker bug
    [*] Better focus handling
 
 --------------------------------------------------------------------------------

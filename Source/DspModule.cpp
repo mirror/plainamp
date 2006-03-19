@@ -68,7 +68,7 @@ bool DspModule::Start( int iIndex )
 		
 		DspModule ** new_active_dsp_mods = new DspModule * [ active_dsp_count + 1 ];
 		memcpy( new_active_dsp_mods, active_dsp_mods, iIndex * sizeof( DspModule * ) );
-		memcpy( new_active_dsp_mods + iIndex + 1, active_dsp_mods, ( active_dsp_count - iIndex ) * sizeof( DspModule * ) );
+		memcpy( new_active_dsp_mods + iIndex + 1, active_dsp_mods + iIndex, ( active_dsp_count - iIndex ) * sizeof( DspModule * ) );
 		for( int i = iIndex + 1; i < active_dsp_count + 1; i++ )
 		{
 			new_active_dsp_mods[ i ]->iArrayIndex = i;
