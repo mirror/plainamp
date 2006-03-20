@@ -37,8 +37,8 @@ IDI_ICON1               ICON                    "Plainamp.ico"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,2,1,10
- PRODUCTVERSION 0,2,1,10
+ FILEVERSION 0,2,2,1
+ PRODUCTVERSION 0,2,2,1
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -55,11 +55,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Hartwork Project (http://www.hartwork.org)"
             VALUE "FileDescription", "Plainamp"
-            VALUE "FileVersion", "0, 2, 1, 10"
+            VALUE "FileVersion", "0, 2, 2, 1"
             VALUE "InternalName", "Plainamp"
             VALUE "LegalCopyright", "Copyright (C) 2005 Sebastian Pipping"
             VALUE "ProductName", "Plainamp"
-            VALUE "ProductVersion", "0, 2, 1, 10"
+            VALUE "ProductVersion", "0, 2, 2, 1"
         END
     END
     BLOCK "VarFileInfo"

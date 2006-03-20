@@ -3,12 +3,12 @@
    http://sourceforge.net/projects/plainamp/
 
 --------------------------------------------------------------------------------
-   0.2.2                                                           ???
+   0.2.2                                                           2006-03-20
 --------------------------------------------------------------------------------
 
-   [+] Windows XP manifest added
-   [+] Missing "Preferences" entry added to main menu
    [+] Invert selection added
+   [+] Missing "Preferences" entry added to main menu
+   [+] Windows XP manifest added
 
    [*] Fixed: DSP stacker bug
    [*] Better focus handling
