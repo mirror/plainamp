@@ -144,6 +144,12 @@ Section "MainSection" SEC01
 ; -------------------------------------
   StrCpy $0 "$INSTDIR\Plugins"
 ; -------------------------------------
+  StrCpy $1 "dsp_bs2b.dll"
+  Call OpenConfirmLookup
+  IntCmp 0 $2 +2
+  File "Instdir\Plugins\dsp_bs2b.dll"
+  Call CloseConfirmLookup
+
   StrCpy $1 "in_mad.dll"
   Call OpenConfirmLookup
   IntCmp 0 $2 +2
@@ -265,6 +271,8 @@ Section Uninstall
 ; -------------------------------------
   StrCpy $0 "$INSTDIR\Plugins"
 ; -------------------------------------
+  StrCpy $1 "dsp_bs2b.dll"
+  Call un.DeleteRetryLookup
   StrCpy $1 "in_mad.dll"
   Call un.DeleteRetryLookup
   StrCpy $1 "out_wave_gpl.dll"

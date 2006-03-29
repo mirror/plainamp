@@ -69,15 +69,19 @@ public:
 		static bool FindAll( TCHAR * szPath, TCHAR * szPattern, bool bKeepLoaded );
 
 protected:	
-	HINSTANCE    hDLL;          ///< Library handle
-	TCHAR *      szName;        ///< Name
-	int          iNameLen;      ///< Length of name (in characters)
+	HINSTANCE    hDLL;               ///< Library handle
+	TCHAR *      szName;             ///< Name
+	int          iNameLen;           ///< Length of name (in characters)
+	
+	BOOL iHookerIndex;               ///< Window hook index (0..HC-1). Only last can be unloaded
+	WNDPROC WndprocBackup;           ///< Window procedure backup. Is restored when unloading. Only valid for <iHookerIndex != -1>
+	static int iWndprocHookCounter;  ///< Number of window hooks (=HC)
 
 private:
-	TCHAR *      szFullpath;    ///< Full path e.g. "C:\test.dll"
-	TCHAR *      szFilename;    ///< Filename e.g. "test.dll"
-	int          iFullpathLen;  ///< Length of full path (in characters)
-	int          iFilenameLen;  ///< Length of filename (in characters)
+	TCHAR *      szFullpath;         ///< Full path e.g. "C:\test.dll"
+	TCHAR *      szFilename;         ///< Filename e.g. "test.dll"
+	int          iFullpathLen;       ///< Length of full path (in characters)
+	int          iFilenameLen;       ///< Length of filename (in characters)
 };
 
 

@@ -20,8 +20,6 @@
 
 vector <GenPlugin *> gen_plugins; // extern
 
-int GenPlugin::iWndprocHookCounter = 0;
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,9 +27,8 @@ int GenPlugin::iWndprocHookCounter = 0;
 ////////////////////////////////////////////////////////////////////////////////
 GenPlugin::GenPlugin( TCHAR * szDllpath, bool bKeepLoaded ) : Plugin( szDllpath )
 {
-	iHookerIndex = -1;
-	WndprocBackup = NULL;
-	plugin = NULL;
+	iHookerIndex  = -1;
+	plugin        = NULL;
 	
 	if( !Load() )
 	{
@@ -81,21 +78,18 @@ bool GenPlugin::Load()
 	//        Therefore we init first and copy the name after.
 
 
-
-	const WNDPROC WndprocBefore = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
-
-	// Init
+	// (5) Init
 	if( plugin->init )
 	{
-		plugin->init();
-	}
-
-	const WNDPROC WndprocAfter = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
-	
-	if( WndprocBefore != WndprocAfter )
-	{
-		WndprocBackup = WndprocBefore;
-		iHookerIndex = iWndprocHookCounter++;
+		const WNDPROC WndprocBefore = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
+			plugin->init();
+		const WNDPROC WndprocAfter = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
+		
+		if( WndprocBefore != WndprocAfter )
+		{
+			WndprocBackup  = WndprocBefore;
+			iHookerIndex   = iWndprocHookCounter++;
+		}
 	}
 
 
@@ -133,20 +127,13 @@ bool GenPlugin::Load()
 	Console::Append( TEXT( " " ) );
 
 
+	// Note:  Plugins that use a wndproc hook need
+	//        to be unloaded in the inverse loading order.
+	//        This is due to the nature of wndproc hooking.
 	if( iHookerIndex != -1 )
 	{
 		Console::Append( TEXT( "Wndproc hook added (by plugin)" ) );
-		Console::Append( TEXT( " " ) );
-		if( iWndprocHookCounter == 2 )
-		{
-			Console::Append( TEXT( "Note: General purpose plugins that use a" ) );
-			Console::Append( TEXT( "   wndproc hook need to be unloaded in the" ) );
-			Console::Append( TEXT( "   inverse loading order. This is due to the" ) );
-			Console::Append( TEXT( "   nature of wndproc hooking." ) );
-			Console::Append( TEXT( " " ) );
-		}
 	}
-
 
 	return true;
 }
@@ -166,8 +153,6 @@ bool GenPlugin::Unload()
 	Console::Append( TEXT( " " ) );
 
 
-	const WNDPROC WndprocBefore = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
-
 	// Quit
 	if( plugin )
 	{
@@ -175,8 +160,8 @@ bool GenPlugin::Unload()
 		plugin = NULL;
 	}
 
-	const WNDPROC WndprocAfter = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
 
+	// Remove wndproc hook
 	if( ( iHookerIndex != -1 ) && ( iHookerIndex == iWndprocHookCounter - 1 ) )
 	{
 		// If we don't restore it the plugins wndproc will
@@ -186,9 +171,9 @@ bool GenPlugin::Unload()
 		Console::Append( TEXT( " " ) );
 
 		iHookerIndex  = -1;
-		WndprocBackup = NULL;
 		iWndprocHookCounter--;
 	}
+
 
 	FreeLibrary( hDLL );
 	hDLL = NULL;

@@ -15,6 +15,7 @@
 #include "Unicode.h"
 #include "Console.h"
 #include "Config.h"
+#include "Playback.h"
 
 
 
@@ -29,9 +30,11 @@ int active_output_count = 0; // extern
 ////////////////////////////////////////////////////////////////////////////////
 OutputPlugin::OutputPlugin( TCHAR * szDllpath, bool bKeepLoaded ) : Plugin( szDllpath )
 {
-	bActive      = false;
-	iArrayIndex  = -1;
-	plugin       = NULL;
+	iHookerIndex  = -1;
+
+	bActive       = false;
+	iArrayIndex   = -1;
+	plugin        = NULL;
 	
 	if( !Load() ) 
 	{
@@ -128,7 +131,25 @@ bool OutputPlugin::Load()
 	
 	if( plugin->Init )
 	{
-		plugin->Init();
+		// Init
+		const WNDPROC WndprocBefore = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
+			plugin->Init();
+		const WNDPROC WndprocAfter = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
+		
+		if( WndprocBefore != WndprocAfter )
+		{
+			WndprocBackup  = WndprocBefore;
+			iHookerIndex   = iWndprocHookCounter++;
+		}
+
+
+		// Note:  Plugins that use a wndproc hook need
+		//        to be unloaded in the inverse loading order.
+		//        This is due to the nature of wndproc hooking.
+		if( iHookerIndex != -1 )
+		{
+			Console::Append( TEXT( "Wndproc hook added (by plugin)" ) );
+		}
 	}
 
 	return true;
@@ -142,7 +163,7 @@ bool OutputPlugin::Load()
 bool OutputPlugin::Unload()
 {
 	if( !IsLoaded() ) return true;
-	if( bActive ) return false;
+	if( bActive && Playback::IsPlaying() ) return false;
 
 	TCHAR szBuffer[ 5000 ];
 	_stprintf( szBuffer, TEXT( "Unloading <%s>" ), GetFilename() );
@@ -154,6 +175,19 @@ bool OutputPlugin::Unload()
 	{
 		if( plugin->Quit ) plugin->Quit();
 		plugin = NULL;
+	}
+	
+	// Remove wndproc hook
+	if( ( iHookerIndex != -1 ) && ( iHookerIndex == iWndprocHookCounter - 1 ) )
+	{
+		// If we don't restore it the plugins wndproc will
+		// still be called which is not there anymore -> crash
+		SetWindowLong( WindowMain, GWL_WNDPROC, ( LONG )WndprocBackup );
+		Console::Append( TEXT( "Wndproc hook removed (by host)" ) );
+		Console::Append( TEXT( " " ) );
+
+		iHookerIndex  = -1;
+		iWndprocHookCounter--;
 	}
 
 	FreeLibrary( hDLL );

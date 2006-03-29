@@ -630,29 +630,8 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 					VisLock.Enter();
 				}
 			VisLock.Leave();
-	
-
-			// Input
-			vector <InputPlugin *>::iterator iter_input = input_plugins.begin();
-			while( iter_input != input_plugins.end() )
-			{
-				( *iter_input )->Unload();
-				iter_input++;
-			}
-
-			
-			// Output
-			vector <OutputPlugin *>::iterator iter_output = output_plugins.begin();
-			while( iter_output != output_plugins.end() )
-			{
-				( *iter_output )->Unload();
-				iter_output++;
-			}
-			
-			// Note: Gen plugs are unloaded after the message loop
-
-			break;
 		}
+		break;
 
 	case WM_DESTROY:
 		{

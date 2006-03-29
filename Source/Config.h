@@ -64,6 +64,9 @@ protected:
 	
 	virtual void Read() = 0;
 	virtual void Write() = 0;
+	
+	// virtual void Backup() = 0;   ///< Creates a backup and deletes old backup if it exists
+	// virtual void Restore() = 0;  ///< Restores settings from backup and destroys the backup
 
 private:
 	bool      m_bCopyKey;  ///< Keyname is copy (has to be freed on destruction)

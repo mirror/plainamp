@@ -29,6 +29,8 @@ InputPlugin * active_input_plugin = NULL; // extern
 ////////////////////////////////////////////////////////////////////////////////
 InputPlugin::InputPlugin( TCHAR * szDllpath, bool bKeepLoaded ) : Plugin( szDllpath )
 {
+	iHookerIndex   = -1;
+
 	szFilters      = NULL;
 	iFiltersLen    = 0;
 	plugin         = NULL;
@@ -129,8 +131,18 @@ bool InputPlugin::Load()
 	}
 
 
+	
 	// (5) Init
-	plugin->Init();
+	const WNDPROC WndprocBefore  = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
+		plugin->Init();
+	const WNDPROC WndprocAfter   = ( WNDPROC )GetWindowLong( WindowMain, GWL_WNDPROC );
+	
+	if( WndprocBefore != WndprocAfter )
+	{
+		WndprocBackup  = WndprocBefore;
+		iHookerIndex   = iWndprocHookCounter++;
+	}
+	
 
 
 	TCHAR szBuffer[ 5000 ];
@@ -139,7 +151,15 @@ bool InputPlugin::Load()
 	
 	
 	Integrate();
+	
 
+	// Note:  Plugins that use a wndproc hook need
+	//        to be unloaded in the inverse loading order.
+	//        This is due to the nature of wndproc hooking.
+	if( iHookerIndex != -1 )
+	{
+		Console::Append( TEXT( "Wndproc hook added (by plugin)" ) );
+	}
 
 	return true;
 }	
@@ -299,6 +319,19 @@ bool InputPlugin::Unload()
 		if( plugin->Quit ) plugin->Quit();
 		plugin->outMod = NULL;
 		plugin = NULL;
+	}
+	
+	// Remove wndproc hook
+	if( ( iHookerIndex != -1 ) && ( iHookerIndex == iWndprocHookCounter - 1 ) )
+	{
+		// If we don't restore it the plugins wndproc will
+		// still be called which is not there anymore -> crash
+		SetWindowLong( WindowMain, GWL_WNDPROC, ( LONG )WndprocBackup );
+		Console::Append( TEXT( "Wndproc hook removed (by host)" ) );
+		Console::Append( TEXT( " " ) );
+
+		iHookerIndex  = -1;
+		iWndprocHookCounter--;
 	}
 
 	FreeLibrary( hDLL );

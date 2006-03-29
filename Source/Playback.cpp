@@ -105,12 +105,17 @@ bool OpenPlay( TCHAR * szFilename, int iNumber )
 	
 	InputPlugin * old_input = active_input_plugin;
 	active_input_plugin = iter->second;
-/*	
-	if( old_input && active_input_plugin != old_input )
+
+	if( old_input )
 	{
-		// ...
+		// if( active_input_plugin != old_input ) ----> TODO unload old plugin
+		
+		// Some output plugins require a call to Close() before each
+		// call to Open(). Calling Input::Stop() will make the input plugin
+		// call Output::Close() and thus solve this problem.
+		old_input->plugin->Stop();
 	}
-*/	
+
 	if( !active_input_plugin->plugin )
 	{
 		Console::Append( TEXT( "ERROR: Input plugin is NULL" ) );
@@ -149,12 +154,12 @@ bool OpenPlay( TCHAR * szFilename, int iNumber )
 	active_input_plugin->plugin->Play( szTemp );
 	delete [] szTemp;
 #else	
-	active_input_plugin->plugin->Play( szFilename );
-	
 	// Title
 	TCHAR szTitle[ 2000 ] = TEXT( "\0" );
 	int length_in_ms;
 	active_input_plugin->plugin->GetFileInfo( szFilename, szTitle, &length_in_ms );
+
+	active_input_plugin->plugin->Play( szFilename );
 #endif
 
 	bPlaying  = true;
@@ -203,7 +208,7 @@ bool Playback_PrevOrNext( bool bPrevOrNext )
 	{
 		if( bPlaying )
 		{
-			active_input_plugin->plugin->Stop();
+			// NOT TWICE active_input_plugin->plugin->Stop();
 			bPlaying  = false;
 			bPaused   = false;
 			
@@ -264,7 +269,7 @@ bool Playback::Play()
 			// New track!
 			
 			// Stop
-			active_input_plugin->plugin->Stop();
+			// NOT TWICE active_input_plugin->plugin->Stop();
 			
 			// Timer OFF
 			EnableTimer( false );
@@ -371,6 +376,7 @@ bool Playback::Stop()
 	{
 		active_input_plugin->plugin->Stop();
 	}
+	active_input_plugin = NULL; // QUICK FIX
 
 	bPlaying  = false;
 	bPaused   = false;

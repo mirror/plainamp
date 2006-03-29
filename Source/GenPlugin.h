@@ -56,10 +56,6 @@ public:
 	inline bool AllowRuntimeUnload() { return ( iHookerIndex == -1 ) || ( iHookerIndex == iWndprocHookCounter - 1 ); }
 
 private:
-	BOOL iHookerIndex;
-	WNDPROC WndprocBackup;
-	static int iWndprocHookCounter;
-
 	winampGeneralPurposePlugin * plugin;
 };
 
