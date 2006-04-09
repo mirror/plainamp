@@ -8,6 +8,7 @@
 
    [+] Now bundled with Bauer stereophonic-to-binaural DSP
 
+   [*] Fixed: Proper seekbar reset on stop
    [*] Fixed: Output plugin handling related bugs
 
 --------------------------------------------------------------------------------

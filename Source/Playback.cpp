@@ -383,6 +383,9 @@ bool Playback::Stop()
 	
 	// Timer OFF
 	EnableTimer( false );
+	
+	// Reset seekbar
+	Playback::UpdateSeek();
 
 	return true;
 }
@@ -424,25 +427,45 @@ bool Playback::IsPaused()
 ////////////////////////////////////////////////////////////////////////////////
 bool Playback::UpdateSeek()
 {
-	if( !active_input_plugin ) return false;
-	if( !active_input_plugin->plugin ) return false;
+	static bool bSliderEnabledBefore = false;
+	bool bSliderEnabledAfter;
+	
 	if( !WindowSeek ) return false;
-	
-	const int ms_len = active_input_plugin->plugin->GetLength();
-	if( !ms_len ) return false;
 
-	const int ms_cur = active_input_plugin->plugin->GetOutputTime();
-	const int iVal = ( ms_cur * 1000 ) / ms_len;
-
-/*
-	TCHAR szBuffer[ 5000 ];
-	_stprintf( szBuffer, TEXT( "__ %03i" ), uVal );
-	Console::Append( szBuffer );
-*/
-	if( iVal > 1000 ) return false;
+	int iVal = 0;
 	
-	// Update slider
-	PostMessage( WindowSeek, TBM_SETPOS, ( WPARAM )( TRUE ), iVal );
+	if( !active_input_plugin || !active_input_plugin->plugin )
+	{
+		if( bSliderEnabledBefore )
+		{
+			// Update slider
+			PostMessage( WindowSeek, TBM_SETPOS, ( WPARAM )( TRUE ), iVal );
+
+			// Disable slider
+			EnableWindow( WindowSeek, FALSE );
+			bSliderEnabledBefore = false;
+		}
+	}
+	else
+	{
+		const int ms_len = active_input_plugin->plugin->GetLength();
+		if( ms_len )
+		{
+			const int ms_cur = active_input_plugin->plugin->GetOutputTime();
+			iVal = ( ms_cur * 1000 ) / ms_len;
+			
+			if( iVal > 1000 ) iVal = 0;
+		}
+		
+		if( !bSliderEnabledBefore )
+		{
+			EnableWindow( WindowSeek, TRUE );
+			bSliderEnabledBefore = true;
+		}
+		
+		// Update slider
+		PostMessage( WindowSeek, TBM_SETPOS, ( WPARAM )( TRUE ), iVal );
+	}
 	
 	return true;
 }

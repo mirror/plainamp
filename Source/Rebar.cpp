@@ -472,6 +472,7 @@ bool Rebar_BuildSeekBand()
 		TRACKBAR_CLASS,
 		TEXT( "" ), 
         WS_CHILD |
+			WS_DISABLED |
 			TBS_HORZ |
 			TBS_NOTICKS |
 			TBS_FIXEDLENGTH |
