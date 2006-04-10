@@ -67,7 +67,7 @@
 
 
 #define FILE_DESCRIPTION "Plainamp"
-#define VER_STRING "0.2.2.3"
+#define VER_STRING "0.2.2.4"
 
 
 #define PLAINAMP_TITLE        TEXT( FILE_DESCRIPTION )

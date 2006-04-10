@@ -145,7 +145,7 @@ bool BuildMainWindow()
 	// Plainamp
 	AppendMenu( plainamp_menu, MF_STRING, WINAMP_OPTIONS_PREFS, TEXT( "Preferences   \tCtrl+P" ) );
 	AppendMenu( plainamp_menu, MF_SEPARATOR | MF_DISABLED | MF_GRAYED, ( UINT_PTR )-1, NULL );
-	AppendMenu( plainamp_menu, MF_STRING, WINAMP_HELP_ABOUT, TEXT( "&About" ) );
+	AppendMenu( plainamp_menu, MF_STRING, WINAMP_HELP_ABOUT, TEXT( "&About\tCtrl+F1" ) );
 	AppendMenu( plainamp_menu, MF_STRING, WINAMP_FILE_QUIT, TEXT( "&Exit       \tAlt+F4" ) );
 
 	// Playback
@@ -167,7 +167,7 @@ bool BuildMainWindow()
 	AppendMenu( playlist_menu, MF_STRING, ID_PE_CLEAR, TEXT( "Remove all\tCtrl+Shift+Del" ) );
 	AppendMenu( playlist_menu, MF_SEPARATOR | MF_DISABLED | MF_GRAYED, ( UINT_PTR )-1, NULL );
 	AppendMenu( playlist_menu, MF_STRING, ID_PE_SELECTALL, TEXT( "Select &all\tCtrl+A" ) );
-	AppendMenu( playlist_menu, MF_STRING, ID_PE_NONE, TEXT( "Select &zero" ) );
+	AppendMenu( playlist_menu, MF_STRING, ID_PE_NONE, TEXT( "Select &zero\tCtrl+Shift+A" ) );
 	AppendMenu( playlist_menu, MF_STRING, ID_PE_INVERT, TEXT( "Select &invert\tCtrl+I" ) );
 
 	// Windows

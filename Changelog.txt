@@ -7,6 +7,7 @@
 --------------------------------------------------------------------------------
 
    [+] Now bundled with Bauer stereophonic-to-binaural DSP
+   [+] Select zero hotkey added (Ctrl+Shift+A)
 
    [*] Fixed: Proper seekbar reset on stop
    [*] Fixed: Output plugin handling related bugs

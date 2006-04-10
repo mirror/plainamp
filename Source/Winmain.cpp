@@ -155,16 +155,17 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdSho
 
 	// Todo: all the rest...
 	ACCEL accels[] = {
-		{ PLUS_CONTROL,        'A',        ID_PE_SELECTALL },       // [Ctrl] + [A]
-		{ PLUS_CONTROL,        'I',        ID_PE_INVERT },          // [Ctrl] + [I]
-		{ PLUS_CONTROL,        'N',        ID_PE_NEW },             // [Ctrl] + [N]
-		{ PLUS_CONTROL,        'O',        ID_PE_OPEN },            // [Ctrl] + [O]
+		{ PLUS_CONTROL,        'A',        ID_PE_SELECTALL      },  // [Ctrl] + [A]
+		{ PLUS_CONTROL,        'I',        ID_PE_INVERT         },  // [Ctrl] + [I]
+		{ PLUS_CONTROL,        'N',        ID_PE_NEW            },  // [Ctrl] + [N]
+		{ PLUS_CONTROL,        'O',        ID_PE_OPEN           },  // [Ctrl] + [O]
 		{ PLUS_CONTROL,        'P',        WINAMP_OPTIONS_PREFS },  // [Ctrl] + [P]
-		{ PLUS_CONTROL,        'S',        ID_PE_SAVEAS },          // [Ctrl] + [S]
-		{ PLUS_CONTROL,        VK_F1,      WINAMP_HELP_ABOUT },     // [Ctrl] + [F1]
-		{ PLUS_CONTROL_SHIFT,  VK_DELETE,  ID_PE_CLEAR },           // [Ctrl] + [Shift] + [Del]
-		{ PLUS_ALT,            'F',        WINAMP_MAINMENU },       // [Alt] + [F]
-		{ PLUS_ALT,            VK_F4,      WINAMP_FILE_QUIT }       // [Alt] + [F4]
+		{ PLUS_CONTROL,        'S',        ID_PE_SAVEAS         },  // [Ctrl] + [S]
+		{ PLUS_CONTROL,        VK_F1,      WINAMP_HELP_ABOUT    },  // [Ctrl] + [F1]
+		{ PLUS_CONTROL_SHIFT,  'A',        ID_PE_NONE           },  // [Ctrl] + [Shift] + [A]
+		{ PLUS_CONTROL_SHIFT,  VK_DELETE,  ID_PE_CLEAR          },  // [Ctrl] + [Shift] + [Del]
+		{ PLUS_ALT,            'F',        WINAMP_MAINMENU      },  // [Alt] + [F]
+		{ PLUS_ALT,            VK_F4,      WINAMP_FILE_QUIT     }   // [Alt] + [F4]
 	};
 	
 	
