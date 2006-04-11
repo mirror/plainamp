@@ -3,7 +3,7 @@
    http://sourceforge.net/projects/plainamp/
 
 --------------------------------------------------------------------------------
-   0.2.3                                                           ???
+   0.2.3                                                           2006-04-11
 --------------------------------------------------------------------------------
 
    [+] Now bundled with Bauer stereophonic-to-binaural DSP
@@ -11,6 +11,7 @@
 
    [*] Fixed: Proper seekbar reset on stop
    [*] Fixed: Output plugin handling related bugs
+   [*] Fixed: Plainbar on-off-on bug
 
 --------------------------------------------------------------------------------
    0.2.2                                                           2006-03-20
@@ -42,7 +43,7 @@
    [+] Better handling of playback with no active output plugin
    [+] Missing plugins warning can now be turned off
 
-   [*] Playlist related bugs fixed
+   [*] Fixed: Playlist related bugs
 
 --------------------------------------------------------------------------------
    0.1.9                                                           2005-12-23
@@ -72,6 +73,7 @@
 --------------------------------------------------------------------------------
    0.1.6                                                           2005-10-30
 --------------------------------------------------------------------------------
+
    [+] Keyboard playlist selection enhanced (hold <Ctrl>)
    [+] Playlist entries now can be moved (hold <Alt>, press <Up>/<Down>)
 

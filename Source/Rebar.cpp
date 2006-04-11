@@ -1345,6 +1345,21 @@ LRESULT CALLBACK WndprocVis( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
 	switch( message )
 	{
+	case WM_SHOWWINDOW:
+		{
+			if( wp == FALSE )
+			{
+				const HWND hChild = GetWindow( hwnd, GW_CHILD );
+				if( !IsWindow( hChild ) ) break;
+
+				// Strange workaround
+				ShowWindow( hChild, FALSE );
+				SetParent( hChild, NULL );
+				PostMessage( hChild, WM_SYSCOMMAND, SC_CLOSE, 0 );
+			}
+		}
+		break;
+
 	case WM_SIZE:
 		{
 			// Resize vis child

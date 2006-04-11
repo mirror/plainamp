@@ -11,6 +11,7 @@
 
 
 #include "Main.h"
+#include "GlobalVersion.h"
 #include "Playlist.h"
 #include "Console.h"
 #include "Status.h"

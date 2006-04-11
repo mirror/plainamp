@@ -66,13 +66,6 @@
 #include <commctrl.h>
 
 
-#define FILE_DESCRIPTION "Plainamp"
-#define VER_STRING "0.2.2.4"
-
-
-#define PLAINAMP_TITLE        TEXT( FILE_DESCRIPTION )
-#define PLAINAMP_VERSION      TEXT( VER_STRING )
-#define PLAINAMP_LONG_TITLE   PLAINAMP_TITLE TEXT( " " ) PLAINAMP_VERSION
 
 
 

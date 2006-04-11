@@ -13,6 +13,7 @@
 #include "Status.h"
 #include "Main.h"
 #include "Util.h"
+#include "GlobalVersion.h"
 
 
 

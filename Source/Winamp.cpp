@@ -941,7 +941,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				}
 				else if( lp == IPC_GETPLAINBARTARGET )
 				{
-					return ( LRESULT )WindowVis;
+					return ( LRESULT )( IsWindowVisible( WindowVis ) ? WindowVis : NULL );
 				}
 
 				TCHAR szBuffer[ 5000 ];
