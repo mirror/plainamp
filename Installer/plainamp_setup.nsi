@@ -3,7 +3,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "Plainamp"
-!define PRODUCT_VERSION "0.2.2"
+!define PRODUCT_VERSION "0.2.3"
 !define PRODUCT_PUBLISHER "Hartwork Project"
 !define PRODUCT_WEBSITE "http://www.hartwork.org"
 !define PRODUCT_WEBSITE_LINKFILE "Website.url"
