@@ -431,12 +431,6 @@
 			<Option link="0" />
 			<Option target="default" />
 		</Unit>
-		<Unit filename="..\..\Source\resource.h">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="default" />
-		</Unit>
 		<Unit filename="..\..\Source\resrc1.h">
 			<Option compilerVar="CPP" />
 			<Option compile="0" />
