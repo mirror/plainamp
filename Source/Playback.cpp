@@ -56,7 +56,7 @@ void EnableTimer( bool bEnabled )
 	
 	if( bEnabled )
 	{
-		SetTimer( WindowMain, TIMER_SEEK_UPDATE, 1000, NULL );
+		SetTimer( WindowMain, TIMER_SEEK_UPDATE, 500, NULL );
 	}
 	else
 	{

@@ -110,8 +110,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdSho
 	// One msgbox maximum
 	if( bWarnPluginsMissing )
 	{
-		
-		
 		if( input_plugins.empty() )
 		{
 			// No input plugins
@@ -169,7 +167,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdSho
 	};
 	
 	
-	HACCEL hAccel = CreateAcceleratorTable( accels, sizeof( accels ) / sizeof( ACCEL ) );
+	const HACCEL hAccel = CreateAcceleratorTable( accels, sizeof( accels ) / sizeof( ACCEL ) );
 	if( !hAccel )
 	{
 		MessageBox( 0, TEXT( "Accelerator table error" ), TEXT( "" ), 0 );

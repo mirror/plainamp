@@ -164,6 +164,14 @@ void SAAdd( void * data, int timestamp, int csa )
 
 
 
+static const double factor = 1.0 / 65536.0 / sqrt( 2.0 );
+static unsigned char spec_left [ 576 ];
+static unsigned char spec_right[ 576 ];
+static double *       in   = NULL;
+static fftw_complex * out  = NULL;
+static fftw_plan p;
+
+
 ////////////////////////////////////////////////////////////////////////////////	
 ///
 ////////////////////////////////////////////////////////////////////////////////	
@@ -214,14 +222,12 @@ void VSAAddPCMData( void * PCMData, int nch, int bps, int timestamp )
 				wave_left[ i ] = ( source[ i ] >> 8 );
 			}
 
-			VisCache::PutWaveLeft( wave_left );		
+			VisCache::PutWaveLeft( wave_left );
 		}
 		else
 		{
-			int i;
-			
 			// Stereo or more
-			for( i = 0; i < 576; i++ )
+			for( int i = 0; i < 576; i++ )
 			{
 				wave_left [ i ] = ( source[ i * nch     ] >> 8 );
 				wave_right[ i ] = ( source[ i * nch + 1 ] >> 8 );
@@ -232,64 +238,47 @@ void VSAAddPCMData( void * PCMData, int nch, int bps, int timestamp )
 		}
 
 
-		// TODO: Much to optimize!
-
-
 		// Spectrum
-		static unsigned char spec_left[ 576 ];
-		static unsigned char spec_right[ 576 ];
-		static fftw_complex * in   = NULL;
-		static fftw_complex * out  = NULL;
-
 		if( !in )
 		{
-			in   = ( fftw_complex * )fftw_malloc( 576 * sizeof( fftw_complex ) );
-			out  = ( fftw_complex * )fftw_malloc( 576 * sizeof( fftw_complex ) );
+			// Init FFT
+			in   = ( double * )fftw_malloc( 576 * 2 * sizeof( fftw_complex ) );
+			out  = ( fftw_complex * )fftw_malloc( 576 * 2 * sizeof( fftw_complex ) );
+			p = fftw_plan_dft_r2c_1d( 576 * 2, in, out, FFTW_ESTIMATE );
 		}
-
-		static const double factor = 1.0 / 65536.0 / sqrt( 2.0 );
 
 
 		// Put left
 		int index = 0;
 		for( int i = 0; i < 576; i++ )
 		{
-			in[ i ][ 0 ] = source[ index += nch ];
-			in[ i ][ 1 ] = 0.0;
+			in[ i ]        = source[ index += nch ];
+			in[ i + 576 ]  = 0.0;
 		}
 
-
-		// Init FFT
-		fftw_plan p = fftw_plan_dft_1d( 576, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
-
-		
 		// Run left
 		fftw_execute( p );
 
 		// Get left
 		for( int i = 0; i < 576; i++ )
 		{
-			if( i & 1 )
-			{
-				spec_left [ i ] = spec_left [ i - 1 ];
-				continue;
-			}
-			const double re = out[ i >> 1 ][ 0 ];
-			const double im = out[ i >> 1 ][ 1 ];
-			const double root = sqrt( re*re + im*im );
-			const double final = 160.0 * log10( 1.0 + root * factor );
+			double & re = out[ i ][ 0 ];
+			double & im = out[ i ][ 1 ];
+			const double final = 160.0 * log10( 1.0 + sqrt( re*re + im*im ) * factor );
 			spec_left[ i ] = ( final < 255.0 ) ? ( unsigned char )final : 255;
 		}
 		VisCache::PutSpecLeft( spec_left );			
 
 
+		// Stereo?
 		if( nch > 1 )
 		{
 			// Put right
 			index = 1;
 			for( int i = 0; i < 576; i++ )
 			{
-				in[ i ][ 0 ] = source[ index += nch ];
+				in[ i       ] = source[ index += nch ];
+				in[ i + 576 ] = 0.0;
 			}
 	
 			// Run right
@@ -298,15 +287,9 @@ void VSAAddPCMData( void * PCMData, int nch, int bps, int timestamp )
 			// Get right
 			for( int i = 0; i < 576; i++ )
 			{
-				if( i & 1 )
-				{
-					spec_right[ i ] = spec_right[ i - 1 ];
-					continue;
-				}
-				const double re = out[ i >> 1 ][ 0 ];
-				const double im = out[ i >> 1 ][ 1 ];
-				const double root = sqrt( re*re + im*im );
-				const double final = 160.0 * log10( 1.0 + root * factor );
+				double & re = out[ i ][ 0 ];
+				double & im = out[ i ][ 1 ];
+				const double final = 160.0 * log10( 1.0 + sqrt( re*re + im*im ) * factor );
 				spec_right[ i ] = ( final < 255.0 ) ? ( unsigned char )final : 255;
 			}
 			VisCache::PutSpecRight( spec_right );
@@ -314,8 +297,7 @@ void VSAAddPCMData( void * PCMData, int nch, int bps, int timestamp )
 
 
 		// Cleanup FFT
-		fftw_destroy_plan( p );
-
+		// fftw_destroy_plan( p );
 		// fftw_free(in);
 		// fftw_free(out);
 	}

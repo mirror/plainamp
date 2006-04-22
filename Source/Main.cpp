@@ -394,16 +394,18 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 							// This is the prepaint stage for an item. Here's where we set the
 							// item's text color. Our return value will tell Windows to draw the
 							// item itself, but it will use the new color we set here.
-							// We'll cycle the colors through red, green, and light blue.
 
 							if( custom->nmcd.dwItemSpec == playlist->GetCurIndex() )
 							{
+								// Current track
 								custom->clrTextBk = RGB( 225, 225, 225 );
+								// AZUREUS: custom->clrTextBk = RGB( 212, 212, 200 );
 							}
 							else
 							{
 								if( custom->nmcd.dwItemSpec & 1 )
 									custom->clrTextBk = RGB( 245, 248, 250 );
+									// AZUREUS: custom->clrTextBk = RGB( 245, 245, 245 );
 								else
 									custom->clrTextBk = RGB( 255, 255, 255 );
 							}
@@ -588,6 +590,8 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				MoveWindow( WindowRebar, 0, 0, iClientWidth, iRebarHeight, TRUE );
 			if( WindowPlaylist )
 			{
+				// Thin frame hack, TODO also at playlist creation
+				// MoveWindow( WindowPlaylist, -1, iRebarHeight, iClientWidth + 2, iPlaylistHeight, TRUE );
 				MoveWindow( WindowPlaylist, 0, iRebarHeight, iClientWidth, iPlaylistHeight, TRUE );
 				playlist->Resize( WindowMain );
 			}
