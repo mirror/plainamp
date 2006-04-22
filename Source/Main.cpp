@@ -309,7 +309,7 @@ bool AddTrayIcon( HWND hwnd )
 	return ( Shell_NotifyIcon( NIM_ADD, &nid ) != 0 );
 }
 
-void RemoveTrayIcon()
+inline void RemoveTrayIcon()
 {
 	Shell_NotifyIcon( NIM_DELETE, &nid );
 }
@@ -322,15 +322,14 @@ void RemoveTrayIcon()
 LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
 	// Tool windows are hidden on minimize/re-shown on restore
-	static bool bConsoleTodo = false;
-	static bool bManagerTodo = false;
+	static bool bConsoleTodo  = false;
+	static bool bManagerTodo  = false;
 
-	static bool bRemoveIcon = false;
+	static bool bRemoveIcon   = false;
 
 	switch( message )
 	{
 	case WM_SETFOCUS:
-		// To re-"blue"
 		SetFocus( WindowPlaylist );
 		break;
 
@@ -342,7 +341,7 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 
 	case WM_NOTIFY:
 		{
-			NMHDR * hdr = ( NMHDR * )lp;
+			const NMHDR * const hdr = ( NMHDR * )lp;
 			
 			switch( hdr->code )
 			{
@@ -379,8 +378,7 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 */				
 			case NM_CUSTOMDRAW:
 				{
-					NMLVCUSTOMDRAW * custom = ( NMLVCUSTOMDRAW * )lp;
-
+					NMLVCUSTOMDRAW * const custom = ( NMLVCUSTOMDRAW * )lp;
 					switch( custom->nmcd.dwDrawStage )
 					{
 					case CDDS_PREPAINT:
@@ -414,27 +412,10 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 								custom->clrText = RGB( 255, 0, 0 );
 							else
 								custom->clrText = RGB( 0, 0, 0 );
-							
-							
-/*
-							if ( (custom->nmcd.dwItemSpec % 3) == 0 )
-								crText = RGB(255,0,0);
-							else if ( (custom->nmcd.dwItemSpec % 3) == 1 )
-								crText = RGB(0,255,0);
-							else
-								crText = RGB(128,128,255);
-
-							// Store the color back in the NMLVCUSTOMDRAW struct.
-							custom->clrText = crText;
-*/
-							// Tell Windows to paint the control itself.
 						}
-					/*
-						custom->clrText = RGB( 190, 190, 190 );
-						custom->clrTextBk = RGB( 255, 0, 0 );*/
+
+						// Tell Windows to paint the control itself.
 						return CDRF_DODEFAULT;
-						
-						
 					}
 					break;
 
@@ -485,13 +466,9 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 
 					RECT client;
 					GetClientRect( WindowMain, &client );
-					PostMessage(
-						hwnd,
-						WM_SIZE,
-						SIZE_RESTORED,
-						( client.right - client.left ) << 16 |
-							( client.bottom - client.top )
-					);
+					PostMessage( hwnd, WM_SIZE, SIZE_RESTORED,
+						( client.right - client.left ) << 16
+						| ( client.bottom - client.top ) );
 					
 					break;
 				}
@@ -730,7 +707,7 @@ LRESULT CALLBACK WndprocMain( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			}
 		}
 		break;
-
+		
 	case TRAY_MSG:
 		switch( lp )
 		{

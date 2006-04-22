@@ -34,6 +34,21 @@ bool bInfinitePlaylist;
 ConfBool cbInfinitePlaylist( &bInfinitePlaylist, TEXT( "InfinitePlaylist" ), CONF_MODE_PUBLIC, false );
 
 
+
+// Dragging
+int   iItemHeight       = 15;
+int   iDragStartY       = 0;
+bool  bDragging         = false;
+
+// Liquid selection
+bool  bLiquidSelecting  = false;
+int   iLastTouched      = -1;
+
+// Liquid or range selection
+int   iSelAnchor        = -1;
+
+
+
 void PlaylistView::Create()
 {
 	RECT ClientMain;
@@ -44,12 +59,10 @@ void PlaylistView::Create()
 	const int iPlaylistHeight  = iClientHeight - iRebarHeight - iStatusHeight;
 
 
-
 	LoadCommonControls();
 
 
 	DWORD       dwStyle;
-	// HWND        WindowPlaylist;
 	BOOL        bSuccess = TRUE;
 
 	dwStyle =   WS_TABSTOP | 
@@ -61,23 +74,24 @@ void PlaylistView::Create()
 				LVS_OWNERDATA |
 				LVS_NOCOLUMNHEADER ;
 
-	WindowPlaylist = CreateWindowEx(   WS_EX_CLIENTEDGE,          // ex style
-									 WC_LISTVIEW,               // class name - defined in commctrl.h
-									 TEXT( "" ),                        // dummy text
-									 dwStyle,                   // style
+	WindowPlaylist = CreateWindowEx(
+		WS_EX_CLIENTEDGE,          // ex style
+		WC_LISTVIEW,               // class name - defined in commctrl.h
+		TEXT( "" ),                        // dummy text
+		dwStyle,                   // style
 		0,
 		iRebarHeight, //  + -2,
 		iClientWidth,
 		iPlaylistHeight,
-									 WindowMain,                // parent
-									 NULL,        // ID
-									 g_hInstance,                   // instance
-									 NULL);                     // no extra data
+		WindowMain,                // parent
+		NULL,        // ID
+		g_hInstance,                   // instance
+		NULL );                    // no extra data
 
-	if(!WindowPlaylist) return; // TODO
+	if( !WindowPlaylist ) return; // TODO
 
 	   
-playlist = new PlaylistControler( WindowPlaylist, bPlaylistEntryNumberZeroPadding, &iCurPlaylistPosition );
+	playlist = new PlaylistControler( WindowPlaylist, bPlaylistEntryNumberZeroPadding, &iCurPlaylistPosition );
 
 
 	// Exchange window procedure
@@ -91,39 +105,37 @@ playlist = new PlaylistControler( WindowPlaylist, bPlaylistEntryNumberZeroPaddin
 	ListView_SetExtendedListViewStyle( WindowPlaylist, LVS_EX_FULLROWSELECT ); // | LVS_EX_GRIDLINES );
 	playlist->Resize( WindowMain );
 
-/*
- * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/commctls/listview/structures/lvcolumn.asp
- *
- * Remarks:
- * If a column is added to a list-view control with index 0 (the leftmost column)
- * and with LVCFMT_RIGHT or LVCFMT_CENTER specified, the text is not right-aligned
- * or centered. The text in the index 0 column is left-aligned. Therefore if you
- * keep inserting columns with index 0, the text in all columns are left-aligned.
- * If you want the first column to be right-aligned or centered you can make a dummy
- * column, then insert one or more columns with index 1 or higher and specify the
- * alignment you require. Finally delete the dummy column.
- */
 
-LV_COLUMN lvColumn;
-memset( &lvColumn, 0, sizeof( LV_COLUMN ) );
-lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
+	// http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/commctls/listview/structures/lvcolumn.asp
+	//
+	// Remarks:
+	// If a column is added to a list-view control with index 0 (the leftmost column)
+	// and with LVCFMT_RIGHT or LVCFMT_CENTER specified, the text is not right-aligned
+	// or centered. The text in the index 0 column is left-aligned. Therefore if you
+	// keep inserting columns with index 0, the text in all columns are left-aligned.
+	// If you want the first column to be right-aligned or centered you can make a dummy
+	// column, then insert one or more columns with index 1 or higher and specify the
+	// alignment you require. Finally delete the dummy column.
+	LV_COLUMN lvColumn;
+	memset( &lvColumn, 0, sizeof( LV_COLUMN ) );
+	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
 
-// Number column (with dummy hack)
-lvColumn.fmt      = LVCFMT_LEFT;
-lvColumn.cx       = 0;
-lvColumn.pszText  = TEXT( "" );
-ListView_InsertColumn( WindowPlaylist, 0, &lvColumn );
-lvColumn.fmt      = LVCFMT_RIGHT;
-lvColumn.cx       = 120;
-lvColumn.pszText  = TEXT( "" );
-ListView_InsertColumn( WindowPlaylist, 1, &lvColumn );
-ListView_DeleteColumn( WindowPlaylist, 0 );
+	// Number column (with dummy hack)
+	lvColumn.fmt      = LVCFMT_LEFT;
+	lvColumn.cx       = 0;
+	lvColumn.pszText  = TEXT( "" );
+	ListView_InsertColumn( WindowPlaylist, 0, &lvColumn );
+	lvColumn.fmt      = LVCFMT_RIGHT;
+	lvColumn.cx       = 120;
+	lvColumn.pszText  = TEXT( "" );
+	ListView_InsertColumn( WindowPlaylist, 1, &lvColumn );
+	ListView_DeleteColumn( WindowPlaylist, 0 );
 
-// Entry
-lvColumn.fmt      = LVCFMT_LEFT;
-lvColumn.cx       = 120;
-lvColumn.pszText  = TEXT( "Filename" );
-ListView_InsertColumn(WindowPlaylist, 1, &lvColumn);
+	// Entry
+	lvColumn.fmt      = LVCFMT_LEFT;
+	lvColumn.cx       = 120;
+	lvColumn.pszText  = TEXT( "Filename" );
+	ListView_InsertColumn(WindowPlaylist, 1, &lvColumn);
 
 
 
@@ -160,58 +172,41 @@ if( !GetScrollBarInfo( WindowPlaylist, OBJID_VSCROLL, &scrollbarinfo ) )
 }
 */
 
+	// This trick will set the row height
+	HIMAGELIST hImages = ImageList_Create( 0, 16, ILC_COLORDDB, 0, 0 );
+	ListView_SetImageList( WindowPlaylist, hImages, LVSIL_SMALL );
 }
 
 
 
-
-
-
-
-
-
-// Dragging
-static int iItemHeight = 15;
-static int iDragStartY = 0;
-static bool bDragging = false;
-
-// Liquid selection
-static bool bLiquidSelecting = false;
-static int iLastTouched = -1;
-
-// Liquid or range selection
-static int iSelAnchor = -1;
-
 LRESULT CALLBACK WndprocPlaylist( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
-	/*
-	 * Click, click and click
-	 *
-	 *  [Alt]   [Ctrl]    [Shift]    Action
-	 * -------+---------+---------+-----------------------
-	 *    X   |    X    |    X    |  
-	 *    X   |    X    |         |  
-	 *    X   |         |    X    |  
-	 *    X   |         |         |  
-	 *        |    X    |    X    |  Range selection
-	 *        |    X    |         |  Toggle selection
-	 *        |         |    X    |  Range selection
-	 *        |         |         |  Single selection
-	 *
-	 *
-	 * Click, hold and move
-	 *
-	 *  [Alt]   [Ctrl]    [Shift]    Action
-	 * -------+---------+---------+-----------------------
-	 *    X   |    X    |    X    |  Selection move
-	 *    X   |    X    |         |  Selection move
-	 *    X   |         |    X    |  Selection move
-	 *    X   |         |         |  Selection move
-	 *        |    X    |    X    |  
-	 *        |    X    |         |  
-	 *        |         |    X    |  
-	 *        |         |         |  Liquid selection
-	 */
+	// Click, click and click
+	//
+	//  [Alt]   [Ctrl]    [Shift]    Action
+	// -------+---------+---------+-----------------------
+	//    X   |    X    |    X    |  
+	//    X   |    X    |         |  
+	//    X   |         |    X    |  
+	//    X   |         |         |  
+	//        |    X    |    X    |  Range selection
+	//        |    X    |         |  Toggle selection
+	//        |         |    X    |  Range selection
+	//        |         |         |  Single selection
+	//
+	//
+	// Click, hold and move
+	//
+	//  [Alt]   [Ctrl]    [Shift]    Action
+	// -------+---------+---------+-----------------------
+	//    X   |    X    |    X    |  Selection move
+	//    X   |    X    |         |  Selection move
+	//    X   |         |    X    |  Selection move
+	//    X   |         |         |  Selection move
+	//        |    X    |    X    |  
+	//        |    X    |         |  
+	//        |         |    X    |  
+	//        |         |         |  Liquid selection
 	
 	static bool bCapturing = true;
 	
@@ -750,8 +745,6 @@ LRESULT CALLBACK WndprocPlaylist( HWND hwnd, UINT message, WPARAM wp, LPARAM lp 
 		}
 
 	case WM_LBUTTONDBLCLK:
-		// iCurIndex = Playlist_MouseToIndex();
-
 		LVHITTESTINFO hittest;
 		memset( &hittest, 0, sizeof( LVHITTESTINFO ) );
 		GetCursorPos( &hittest.pt );
