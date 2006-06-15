@@ -14,6 +14,7 @@
 #include "Util.h"
 #include "Font.h"
 #include "Console.h"
+#include "Unicode.h"
 #include <map>
 
 using namespace std;
@@ -377,6 +378,17 @@ bool Prefs::AddPage( prefsDlgRec * PageData )
 	awn->PageData  = PageDataBackup;
 	awn->hwnd      = NULL;
 	
+	const int nameLen = (int)strlen( PageDataBackup->name );
+
+#ifdef PA_UNICODE
+	wchar_t * unicodeName = new wchar_t[nameLen + 1];
+	ToTchar(unicodeName, PageDataBackup->name, nameLen);
+	unicodeName[nameLen] = L'\0';
+	wchar_t * const pagename = unicodeName;
+#else
+	char * const pagename = PageDataBackup->name;
+#endif
+	
 	TV_INSERTSTRUCT tvi = {
 		root,                                            // HTREEITEM hParent
 		TVI_SORT,                                        // HTREEITEM hInsertAfter
@@ -385,14 +397,18 @@ bool Prefs::AddPage( prefsDlgRec * PageData )
 			NULL,                                        // HTREEITEM hItem
 			TVIS_EXPANDED | TVIS_SELECTED,               // UINT state
 			0,                                           // UINT stateMask
-			PageDataBackup->name,                        // LPSTR pszText
-			( int )strlen( PageDataBackup->name ) + 1,   // int cchTextMax
+			pagename,                                    // LPSTR pszText
+			nameLen + 1,                                 // int cchTextMax
 			0,                                           // int iImage
 			0,                                           // int iSelectedImage
 			0,                                           // int cChildren
 			( LPARAM )awn                                // LPARAM lParam
 		}
 	};
+	
+#ifdef PA_UNICODE
+	delete [] unicodeName;
+#endif	
 	
 	HTREEITEM new_item = TreeView_InsertItem( WindowTree, &tvi );
 	

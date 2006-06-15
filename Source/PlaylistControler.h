@@ -52,6 +52,7 @@ public:
 	void Insert( int i, TCHAR * szText );
 	void RemoveAll();
 	void RemoveSelected( bool bPositive );
+	void SelectSingle( int iIndex );
 	void SelectAll( bool bPositive );
 	void SelectInvert();
 

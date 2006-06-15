@@ -18,12 +18,21 @@
 // #include "ide_devcpp/Plainamp_Private.h"
 
 
+// Note: Tu torn on unicode
+// define UNICODE and _UNICODE
+// in the project settings, not
+// in the source and not PA_UNICODE
+
 
 #ifdef UNICODE
-# define PA_UNICODE
-#else
 # ifdef _UNICODE
 #  define PA_UNICODE
+# else
+#  error _UNICODE not defined
+# endif
+#else
+# ifdef _UNICODE
+#  error UNICODE not defined
 # endif
 #endif
 

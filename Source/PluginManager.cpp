@@ -56,7 +56,7 @@ HMENU gen_menu = NULL;
 
 
 bool bManagerGrid;
-ConfBool cbManagerGrid( &bManagerGrid, "ManagerGrid", CONF_MODE_PUBLIC, true );
+ConfBool cbManagerGrid( &bManagerGrid, _T("ManagerGrid"), CONF_MODE_PUBLIC, true );
 
 bool bManagerVisible;
 WINDOWPLACEMENT WinPlaceManager;

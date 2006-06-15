@@ -211,7 +211,7 @@ bool UnbloatFilename( TCHAR * szFullpath, bool bFixTooDeep )
 			
 			char * byte_end = ( char * )end;
 			byte_end -= iBytesLess;
-			end = byte_end;
+			end = (TCHAR *)byte_end;
 			*end = TEXT( '\0' );
 
 			szWalk = szAfterBackslashLast;

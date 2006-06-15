@@ -217,17 +217,6 @@ bool Toolbar::Create()
 		NULL
 	);
 
-/*
-	#define STYLE 1
-	#if STYLE == 1
-		// Normal
-		MoveWindow( rebar, 0, 0, width, 30, TRUE );
-	#elif STYLE == 2
-		// Left ONLY
-		MoveWindow( rebar, 1, 0, width - 1, 30, TRUE );
-	#endif
-*/
-
 	REBARINFO rbi = {
 		sizeof( REBARINFO ),         // UINT cbSize;
 		0,                           // UINT fMask
@@ -262,6 +251,16 @@ bool Toolbar::Create()
 	Rebar_BuildPanBand();
 	Rebar_BuildButtonsBand();
 	Rebar_BuildVisBand();
+
+
+	// Note:  Doing it twice is on purpose
+	cbiOrderBand.Apply  ( WindowRebar, BAND_ORDER   );
+	cbiEqBand.Apply     ( WindowRebar, BAND_EQ      );
+	cbiSeekBand.Apply   ( WindowRebar, BAND_SEEK    );
+	cbiVolBand.Apply    ( WindowRebar, BAND_VOL     );
+	cbiPanBand.Apply    ( WindowRebar, BAND_PAN     );
+	cbiButtonsBand.Apply( WindowRebar, BAND_BUTTONS );
+	cbiVisBand.Apply    ( WindowRebar, BAND_VIS     );
 
 	cbiOrderBand.Apply  ( WindowRebar, BAND_ORDER   );
 	cbiEqBand.Apply     ( WindowRebar, BAND_EQ      );
@@ -532,7 +531,7 @@ bool Rebar_BuildSeekBand()
 								RBBS_CHILDEDGE |
 								( biSeekBand.m_bBreak ? RBBS_BREAK : 0 );
 
-	rbbi_seek.lpText		= " Pos";
+	rbbi_seek.lpText		= _T(" Pos");
 	rbbi_seek.hwndChild		= WindowSeek;
 	rbbi_seek.cxMinChild	= 100;
 	rbbi_seek.cyMinChild	= 21;        // IMP
@@ -1149,7 +1148,7 @@ LRESULT CALLBACK WndprocSeek( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 					// 00:00:00.000
 					_stprintf( szBuffer, TEXT( "Jumped to %02i:%02i:%02i.%03i" ), h, m, s, ms );
 					Console::Append( szBuffer );
-					Console::Append( " " );
+					Console::Append( TEXT(" ") );
 					
 					/*						
 					
@@ -1252,7 +1251,7 @@ LRESULT CALLBACK WndprocVol( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			TCHAR szBuffer[ 5000 ];
 			_stprintf( szBuffer, TEXT( "Volume changed to %i%%" ), iLastVal * 100 / 255 );
 			Console::Append( szBuffer );
-			Console::Append( " " );
+			Console::Append( TEXT(" ") );
 
 			return 0;
 		}
@@ -1330,7 +1329,7 @@ LRESULT CALLBACK WndprocPan( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			else // if( iLastVal > 0 )
 				_stprintf( szBuffer, TEXT( "Panning changed to %i%% right" ), iLastVal * 100 / 127 );
 			Console::Append( szBuffer );
-			Console::Append( " " );
+			Console::Append( TEXT(" ") );
 
 			return 0;
 		}

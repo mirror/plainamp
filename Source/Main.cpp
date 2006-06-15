@@ -249,19 +249,33 @@ void About( HWND hParent )
 	// For info goto
 	// http://predef.sourceforge.net/precomp.html
 
-	TCHAR szBuildDetails[ 1000 ] = "";
+	TCHAR szBuildDetails[1000] = _T("");
+
+#ifdef PA_UNICODE		
+	wchar_t * const szCharSet = L"UNICODE";
+#else
+	char * const szCharSet = "ANSI";
+#endif
 
 #ifdef __GNUC__
 	_stprintf( szBuildDetails,
-		TEXT( "\n\n\nGNU GCC " __VERSION__ "\n" __DATE__ )
+		TEXT( "\n\n\nGNU GCC " __VERSION__ "\n"
+				"Character set %s\n"
+				"\n"
+				__DATE__),
+		szCharSet
 	);
 #else
 # ifdef _MSC_VER
 	_stprintf(
 		szBuildDetails,
-		TEXT( "\n\n\nMicrosoft Visual C++ %i.%i\n" __DATE__ ),
+		TEXT( "\n\n\nMicrosoft Visual C++ %i.%i\n"
+			"Character set %s\n"
+			"\n"
+			__DATE__),
 		_MSC_VER / 100 - 6,
-		( _MSC_VER % 100 ) / 10
+		( _MSC_VER % 100 ) / 10,
+		szCharSet
 	);
 # endif
 #endif
@@ -269,14 +283,13 @@ void About( HWND hParent )
 	TCHAR szBuffer[ 1000 ];
 	_stprintf(
 		szBuffer,
-		PLAINAMP_LONG_TITLE TEXT( "\n"
-			"\n"
-			"Copyright © 2005 Sebastian Pipping  \n"
-			"<webmaster@hartwork.org>\n"
-			"\n"
-			"-->  http://www.hartwork.org"
-			"%s"
-		),
+		PLAINAMP_LONG_TITLE _T("\n")
+			_T("\n")
+			_T("Copyright \xA9 2005 Sebastian Pipping  \n")
+			_T("<webmaster@hartwork.org>\n")
+			_T("\n")
+			_T("-->  http://www.hartwork.org")
+			_T("%s"),
 		szBuildDetails
 	);
 

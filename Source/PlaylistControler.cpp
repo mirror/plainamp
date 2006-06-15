@@ -234,22 +234,30 @@ void PlaylistControler::RemoveSelected( bool bPositive )
 {
 	SendMessage( _hView, WM_SETREDRAW, FALSE, 0 );
 
+
 	if( bPositive )
 	{
-		LRESULT iWalk = 0;
+		int iFirstDeleted  = -1;
+		LRESULT iWalk      = 0;
+
 		for( ; ; )
 		{
 			// MSDN: The specified item itself is excluded from the search.
 			iWalk = ListView_GetNextItem( _hView, iWalk - 1, LVNI_SELECTED );
-			if( iWalk != -1 )
-			{
-				_database.Erase( iWalk );
-				ListView_DeleteItem( _hView, iWalk );
-			}
-			else
-			{
-				break;
-			}
+			if( iWalk == -1 ) break;
+
+			if( iFirstDeleted == -1 ) iFirstDeleted = iWalk;
+			_database.Erase( iWalk );
+			ListView_DeleteItem( _hView, iWalk );
+		}
+
+		// Select the item that moved up to close the "gap"
+		const int iSizeAfter = _database.GetSize();
+		if( iFirstDeleted != -1 )
+		{
+			const int iIndex = ( iFirstDeleted < iSizeAfter ) ? iFirstDeleted : iSizeAfter - 1;
+			ListView_SetItemState( _hView, ( UINT )-1, 0, LVIS_FOCUSED );
+			ListView_SetItemState( _hView, iIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED );
 		}
 	}
 	else
@@ -303,6 +311,12 @@ void PlaylistControler::RemoveSelected( bool bPositive )
 	SendMessage( _hView, WM_SETREDRAW, TRUE, 0 );
 	
 	if( bRefresh ) Refresh();
+}
+
+void PlaylistControler::SelectSingle( int iIndex )
+{
+	ListView_SetItemState( _hView, ( UINT )-1, 0, LVIS_SELECTED | LVIS_FOCUSED );
+	ListView_SetItemState( _hView, iIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED );
 }
 
 void PlaylistControler::SelectAll( bool bPositive )

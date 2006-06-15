@@ -22,7 +22,7 @@ void ToAnsi( char * szDest, wchar_t * szSource, int iLen )
 	char * const szBytesource = ( char * )szSource;
 	for( int i = 0; i < iLen; i++ )
 	{
-		szDest[ i ] = szBytesource[ 2 * i + 1 ];
+		szDest[ i ] = szBytesource[ 2 * i ];
 	}
 }
 
@@ -69,7 +69,7 @@ void ToTchar( TCHAR * szDest, char * szSource, int iLen )
 #ifdef PA_UNICODE
 	for( int i = 0; i < iLen; i++ )
 	{
-		szDest[ i ] = szSource[ 2 * i + 1 ];
+		szDest[ i ] = (wchar_t)szSource[i];
 	}
 #else
 	memcpy( szDest, szSource, iLen );

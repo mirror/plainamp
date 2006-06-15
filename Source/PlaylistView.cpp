@@ -173,7 +173,7 @@ if( !GetScrollBarInfo( WindowPlaylist, OBJID_VSCROLL, &scrollbarinfo ) )
 */
 
 	// This trick will set the row height
-	HIMAGELIST hImages = ImageList_Create( 0, 16, ILC_COLORDDB, 0, 0 );
+	HIMAGELIST hImages = ImageList_Create( 0, 15, ILC_COLORDDB, 0, 0 );
 	ListView_SetImageList( WindowPlaylist, hImages, LVSIL_SMALL );
 }
 

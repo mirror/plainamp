@@ -246,9 +246,17 @@ void AddDirectory()
 	SHGetPathFromIDList( pidl, szPath );
 
 
+	const bool bEmptyBefore = ( playlist->GetSize() == 0 );
+
 	// Search
 	SearchFolder( szPath );
 
+	// Select first track if playlist was empty before
+	const bool bEmptyAfter = ( playlist->GetSize() == 0 );
+	if( bEmptyBefore && !bEmptyAfter )
+	{
+		playlist->SelectSingle( 0 );
+	}
 
 	// Stay here
 	SetCurrentDirectory( szPath );

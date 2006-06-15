@@ -99,7 +99,7 @@ bool OpenPlay( TCHAR * szFilename, int iNumber )
 	if( iter == ext_map.end() )
 	{
 		Console::Append( TEXT( "ERROR: Extension not supported" ) );
-		Console::Append( " " );
+		Console::Append( TEXT( " " ) );
 		return false;
 	}
 	
@@ -119,7 +119,7 @@ bool OpenPlay( TCHAR * szFilename, int iNumber )
 	if( !active_input_plugin->plugin )
 	{
 		Console::Append( TEXT( "ERROR: Input plugin is NULL" ) );
-		Console::Append( " " );
+		Console::Append( TEXT( " " ) );
 		return false;
 	}
 	
@@ -148,8 +148,8 @@ bool OpenPlay( TCHAR * szFilename, int iNumber )
 
 	// Unicode title
 	TCHAR szTitle[ 2000 ];
-	ToTchar( szTitle, szAnsiTitle, iFilenameLen, iAnsiTitleLen );
-	szTitle[ iAnsiTitleLen ] = TEXT( "\0" );
+	ToTchar( szTitle, szAnsiTitle, iAnsiTitleLen );
+	szTitle[ iAnsiTitleLen ] = TEXT( '\0' );
 
 	active_input_plugin->plugin->Play( szTemp );
 	delete [] szTemp;
@@ -278,7 +278,7 @@ bool Playback::Play()
 			if( !szFilename )
 			{
 				Console::Append( TEXT( "ERROR: Could not resolve filename" ) );
-				Console::Append( " " );
+				Console::Append( TEXT( " " ) );
 				return false;
 			}
 	
@@ -316,7 +316,7 @@ bool Playback::Play()
 		if( !szFilename )
 		{
 			Console::Append( TEXT( "ERROR: Could not resolve filename" ) );
-			Console::Append( " " );
+			Console::Append( TEXT( " " ) );
 			return false;
 		}
 

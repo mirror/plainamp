@@ -455,7 +455,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				_stprintf( szBuffer, TEXT( "WM_COMMAND <%i> <%i>" ), wp, lp );
 				Console::Append( szBuffer );
 				Console::Append( TEXT( "NOT handled" ) );
-				Console::Append( " " );
+				Console::Append( TEXT(" ") );
 			}
 			
 		}
@@ -557,7 +557,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				TCHAR szBuffer[ 5000 ];
 				_stprintf( szBuffer, TEXT( "IPC_GETWND <%i>" ), wp );
 				Console::Append( szBuffer );
-				Console::Append( " " );
+				Console::Append(_T(" "));
 			}
 
 			switch( wp )
@@ -575,7 +575,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				TCHAR szBuffer[ 5000 ];
 				_stprintf( szBuffer, TEXT( "IPC_ISWNDVISIBLE <%i>" ), wp );
 				Console::Append( szBuffer );
-				Console::Append( " " );
+				Console::Append(_T(" "));
 			}
 
 			switch( wp )
@@ -631,9 +631,9 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 			}
 
 		case IPC_GET_EXTENDED_FILE_INFO:
-			Console::Append( "IPC_GET_EXTENDED_FILE_INFO" );
+			Console::Append( TEXT("IPC_GET_EXTENDED_FILE_INFO") );
 			Console::Append( TEXT( "NOT handled" ) );
-			Console::Append( " " );
+			Console::Append(_T(" "));
 			break;
 /*
 		case IPC_GET_EXTENDED_FILE_INFO_HOOKABLE: break;
@@ -651,14 +651,14 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 		case IPC_GETUNCOMPRESSINTERFACE:
 			if( wp == 0x10100000 )
 			{
-				Console::Append( "IPC_GETUNCOMPRESSINTERFACE @ wa_inflate_struct" );
+				Console::Append( TEXT("IPC_GETUNCOMPRESSINTERFACE @ wa_inflate_struct") );
 				Console::Append( TEXT( "NOT handled" ) );
-				Console::Append( " " );
+				Console::Append(_T(" "));
 			}
 			else
 			{
-				Console::Append( "IPC_GETUNCOMPRESSINTERFACE @ zlib" );
-				Console::Append( " " );
+				Console::Append( TEXT("IPC_GETUNCOMPRESSINTERFACE @ zlib") );
+				Console::Append(_T(" "));
 				return ( LRESULT )uncompress;
 			}
 			break;
@@ -697,7 +697,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 					char * szWalk = szPluginInipath + strlen( szPluginInipath ) - 1;
 					while( ( szWalk > szPluginInipath ) && ( *szWalk != '\\' ) ) szWalk--;
 					szWalk++;
-					strcpy( szWalk, TEXT( "Plugins" ) );
+					strcpy( szWalk, "Plugins" );
 				}
 				return ( LRESULT )szPluginInipath;
 			}
@@ -903,7 +903,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				TCHAR szBuffer[ 5000 ];
 				_stprintf( szBuffer, TEXT( "Message \"%s\" registered as #%i" ), wp, res );
 				Console::Append( szBuffer );
-				Console::Append( " " );
+				Console::Append(_T(" "));
 				
 				if( !stricmp( ( char * )wp, "GenHotkeysAdd" ) )
 				{
@@ -928,7 +928,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				TCHAR szBuffer[ 5000 ];
 				_stprintf( szBuffer, TEXT( "Hotkey \"%s\" detected" ), wp );
 				Console::Append( szBuffer );
-				Console::Append( " " );
+				Console::Append(_T(" "));
 				
 				return 1; // Accept???
 			}
@@ -948,7 +948,7 @@ LRESULT CALLBACK WndprocWinamp( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 				_stprintf( szBuffer, TEXT( "WM_WA_IPC <%i> <%i>" ), wp, lp );
 				Console::Append( szBuffer );
 				Console::Append( TEXT( "NOT handled" ) );
-				Console::Append( " " );
+				Console::Append(_T(" "));
 			}
 		}
 		break;

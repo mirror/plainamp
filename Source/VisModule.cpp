@@ -41,7 +41,7 @@ void PlugThread( PVOID pvoid )
 	// TODO: cleanup!!!
 	
 	Console::Append( TEXT( "Visualization thread born" ) );
-	Console::Append( " " );
+	Console::Append( TEXT(" ") );
 	
 	VisModule * mod = ( VisModule * )pvoid;
 	if( !mod ) return;
@@ -257,7 +257,7 @@ void PlugThread( PVOID pvoid )
 	UpdatePluginStatus( mod->plugin, true, mod->plugin->IsActive() );
 	
 	Console::Append( TEXT( "Visualization thread dead" ) );
-	Console::Append( " " );
+	Console::Append( TEXT(" ") );
 }
 
 
