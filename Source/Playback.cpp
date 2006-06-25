@@ -428,7 +428,6 @@ bool Playback::IsPaused()
 bool Playback::UpdateSeek()
 {
 	static bool bSliderEnabledBefore = false;
-	bool bSliderEnabledAfter;
 	
 	if( !WindowSeek ) return false;
 
