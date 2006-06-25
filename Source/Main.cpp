@@ -269,10 +269,10 @@ void About( HWND hParent )
 # ifdef _MSC_VER
 	_stprintf(
 		szBuildDetails,
-		TEXT( "\n\n\nMicrosoft Visual C++ %i.%i\n"
-			"Character set %s\n"
-			"\n"
-			__DATE__),
+		_T("\n\n\nMicrosoft Visual C++ %i.%i\n")
+			_T("Character set %s\n")
+			_T("\n")
+			_T(__DATE__),
 		_MSC_VER / 100 - 6,
 		( _MSC_VER % 100 ) / 10,
 		szCharSet

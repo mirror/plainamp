@@ -116,12 +116,10 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdSho
 			TCHAR szBuffer[ 5000 ];
 			_stprintf(
 				szBuffer,
-				TEXT(
-					"No input plugins were found.\n"
-					"\n"
-					"Please install at least one Winamp input plugin to  \n"
-					"%s  "
-				),
+				_T("No input plugins were found.\n")
+					_T("\n")
+					_T("Please install at least one Winamp input plugin to  \n")
+					_T("%s  "),
 				szPluginDir
 			);
 			
@@ -135,12 +133,10 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdSho
 			TCHAR szBuffer[ 5000 ];
 			_stprintf(
 				szBuffer,
-				TEXT(
-					"No output plugins were found.\n"
-					"\n"
-					"Please install at least one Winamp output plugin to  \n"
-					"%s  "
-				),
+				_T("No output plugins were found.\n")
+					_T("\n")
+					_T("Please install at least one Winamp output plugin to  \n")
+					_T("%s  "),
 				szPluginDir
 			);
 			

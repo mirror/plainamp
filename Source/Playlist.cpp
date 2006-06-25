@@ -874,11 +874,9 @@ bool Playlist::Add( int iIndex, TCHAR * szDisplay, TCHAR * szFilename )
 ////////////////////////////////////////////////////////////////////////////////
 bool Playlist_DialogBoth( bool bOpenOrSave )
 {
-	TCHAR szFilters[] = TEXT(
-		"All files (*.*)\0*.*\0"
-		"Playlist files (*.M3U)\0*.m3u\0"
-		"\0"
-	);
+	TCHAR szFilters[] = _T("All files (*.*)\0*.*\0")
+		_T("Playlist files (*.M3U)\0*.m3u\0")
+		_T("\0");
 	TCHAR szFilename[ MAX_PATH ] = TEXT( "\0" );
 
 	OPENFILENAME ofn;
@@ -1020,28 +1018,68 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 		return false;
 	}
 
+	CloseHandle( hFile );
+
+
 	// Parse file content
 	
 	// File must be
 	// * M3U
 	// * ANSI
+
+#ifdef UNICODE
+	TCHAR * rawRight = new TCHAR[iSizeBytes + 2];
+	int guess = 0;
+	if ((iSizeBytes >= 3) && (rawdata[0] == '\xEF') && (rawdata[1] == '\xBB') && (rawdata[2] == '\xBF')) {
+		// UTF-8
+		MultiByteToWideChar(CP_UTF8, 0, rawdata + 3, iSizeBytes - 3, rawRight, iSizeBytes - 3);
+		rawRight[iSizeBytes - 3] = L'\0';
+	} else if ((iSizeBytes >= 2) && (rawdata[0] == '\xFE') && (rawdata[1] == '\xFF')) {
+		// Works here but should not!?
+
+		// 	UTF-16/UCS-2, big endian -> Swap
+		for (int i = 0; i < iSizeBytes / 2 - 3; i++) {
+			// TODO optimize using one big memcpy
+			rawRight[i] = (((unsigned char)rawdata[2 * i + 4]) << 8) | ((unsigned char)rawdata[2 * i + 3]);
+		}
+		rawRight[iSizeBytes / 2 - 3] = L'\0'; // Why "-3" not "-2" ?
+	} else if ((iSizeBytes >= 2) && (rawdata[0] == '\xFF') && (rawdata[1] == '\xFE')) {
+		// Works here but should not!?
+
+		// 	UTF-16/UCS-2, big endian -> Swap
+		for (int i = 0; i < iSizeBytes / 2 - 3; i++) {
+			// TODO optimize using one big memcpy
+			rawRight[i] = (((unsigned char)rawdata[2 * i + 3]) << 8) | ((unsigned char)rawdata[2 * i + 2]);
+		}
+		rawRight[iSizeBytes / 2 - 3] = L'\0'; // Why "-3" not "-2" ?
+	} else {
+		// ANSI -> Leave gaps
+		for (int i = 0; i < iSizeBytes; i++) {
+			rawRight[i] = (wchar_t)rawdata[i];
+		}
+		rawRight[iSizeBytes] = L'\0';
+	}
+#else
+	TCHAR * rawRight = rawdata;
+#endif
+
 	
-	char * walk = rawdata;
-	const char * eof = rawdata + iSizeBytes;
+	TCHAR * walk = rawRight;
+	const TCHAR * eof = rawRight + iSizeBytes;
 	
-	char * beg = rawdata;
-	char * end;
+	TCHAR * beg = rawRight;
+	TCHAR * end;
 	
 	while( true )
 	{
 		// Find newline or eof
-		while( ( walk < eof ) && ( *walk != '\015' ) && ( *walk != '\012' ) ) walk++;
+		while( ( walk < eof ) && ( *walk != _T('\015') ) && ( *walk != _T('\012') ) ) walk++;
 		end = walk;
 		
-		if( ( end - beg > 2 ) && ( *beg != '#' ) )
+		if( ( end - beg > 2 ) && ( *beg != _T('#') ) )
 		{
 			TCHAR * szKeep;
-			if( beg[ 1 ] == ':' )
+			if( beg[ 1 ] == _T(':') )
 			{
 				// TODO: Better detection, network path?
 				
@@ -1054,7 +1092,7 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 			else
 			{
 				// Skip initial so we don't get a double backslash in between
-				while( ( beg[ 0 ] == '\\' ) && ( beg < end ) ) beg++;
+				while( ( beg[ 0 ] == _T('\\') ) && ( beg < end ) ) beg++;
 				
 				// Relative path
 				const int iSecondLen = end - beg;
@@ -1062,7 +1100,7 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 				memcpy( szKeep, szBaseDir, iBaseDirLen * sizeof( TCHAR ) );
 				ToTchar( szKeep + iBaseDirLen, beg, iSecondLen );
 				
-				szKeep[ iBaseDirLen + iSecondLen ] = TEXT( '\0' );
+				szKeep[ iBaseDirLen + iSecondLen ] = _T( '\0' );
 				
 				UnbloatFilename( szKeep, false );
 			}
@@ -1072,7 +1110,7 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 		}
 		
 		// Skip newlines
-		while( ( walk < eof ) && ( ( *walk == '\015' ) || ( *walk == '\012' ) ) ) walk++;
+		while( ( walk < eof ) && ( ( *walk == _T('\015') ) || ( *walk == _T('\012') ) ) ) walk++;
 		if( walk == eof )
 		{
 			break;
@@ -1082,7 +1120,11 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 	}
 
 	delete [] rawdata;
-	CloseHandle( hFile );
+
+#ifdef UNICODE
+	delete [] rawRight;
+#endif
+
 /*	
 	if( bEmptyBefore )
 	{
