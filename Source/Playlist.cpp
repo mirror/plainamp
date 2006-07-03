@@ -1027,40 +1027,41 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 	// * M3U
 	// * ANSI
 
+	// Convert to ANSI/UTF16LE
 #ifdef UNICODE
-	TCHAR * rawRight = new TCHAR[iSizeBytes + 2];
-	int guess = 0;
-	if ((iSizeBytes >= 3) && (rawdata[0] == '\xEF') && (rawdata[1] == '\xBB') && (rawdata[2] == '\xBF')) {
-		// UTF-8
-		MultiByteToWideChar(CP_UTF8, 0, rawdata + 3, iSizeBytes - 3, rawRight, iSizeBytes - 3);
-		rawRight[iSizeBytes - 3] = L'\0';
-	} else if ((iSizeBytes >= 2) && (rawdata[0] == '\xFE') && (rawdata[1] == '\xFF')) {
-		// Works here but should not!?
-
-		// 	UTF-16/UCS-2, big endian -> Swap
-		for (int i = 0; i < iSizeBytes / 2 - 3; i++) {
-			// TODO optimize using one big memcpy
-			rawRight[i] = (((unsigned char)rawdata[2 * i + 4]) << 8) | ((unsigned char)rawdata[2 * i + 3]);
+	// MultiByteToWideChar
+	// http://msdn.microsoft.com/library/default.asp?url=/library/en-us/intl/unicode_17si.asp
+	wchar_t * rawRight = new TCHAR[iBytesRead + 1];
+	if ((iBytesRead >= 3) && !strncmp(rawdata, "\xEF\xBB\xBF", 3)) {
+		// UTF-8 with BOM, convert
+		::OutputDebugString(_T("UTF-8"));
+		const int charsCopied = ::MultiByteToWideChar(CP_UTF8, 0, rawdata + 3, iBytesRead - 3, rawRight, iBytesRead);
+		rawRight[charsCopied] = L'\0';
+		// ::OutputDebugString(rawRight);
+	} else if ((iBytesRead >= 2) && !strncmp(rawdata, "\xFF\xFE", 2)) {
+		// UTF-16/UCS-2 little endian with BOM, copy 1:1
+		::OutputDebugString(_T("UTF-16 LITTLE"));
+		::CopyMemory(rawRight, rawdata + 2, iBytesRead - 2);
+		rawRight[(iBytesRead - 2) / 2] = L'\0';
+		// ::OutputDebugString(rawRight);
+	} else if ((iBytesRead >= 2) && !strncmp(rawdata, "\xFE\xFF", 2)) {
+		// UTF-16/UCS-2 big endian with BOM, invert
+		::OutputDebugString(_T("UTF-16 BIG"));
+		char * byteText = reinterpret_cast<char *>(rawRight);
+		for (int i = 0; i < iBytesRead - 2; i++) {
+			byteText[i] = rawdata[(i & 1) ? (i + 1) : (i + 3)];
 		}
-		rawRight[iSizeBytes / 2 - 3] = L'\0'; // Why "-3" not "-2" ?
-	} else if ((iSizeBytes >= 2) && (rawdata[0] == '\xFF') && (rawdata[1] == '\xFE')) {
-		// Works here but should not!?
-
-		// 	UTF-16/UCS-2, big endian -> Swap
-		for (int i = 0; i < iSizeBytes / 2 - 3; i++) {
-			// TODO optimize using one big memcpy
-			rawRight[i] = (((unsigned char)rawdata[2 * i + 3]) << 8) | ((unsigned char)rawdata[2 * i + 2]);
-		}
-		rawRight[iSizeBytes / 2 - 3] = L'\0'; // Why "-3" not "-2" ?
+		rawRight[(iBytesRead - 2) / 2] = L'\0';
+		// ::OutputDebugString(rawRight);
 	} else {
-		// ANSI -> Leave gaps
-		for (int i = 0; i < iSizeBytes; i++) {
-			rawRight[i] = (wchar_t)rawdata[i];
-		}
-		rawRight[iSizeBytes] = L'\0';
+		// Other, treat as ANSI
+		::OutputDebugString(_T("ANSI"));
+		const int charsCopied = ::MultiByteToWideChar(CP_ACP, 0, rawdata, iBytesRead, rawRight, iBytesRead);
+		rawRight[charsCopied] = L'\0';
+		// ::OutputDebugString(rawRight);
 	}
 #else
-	TCHAR * rawRight = rawdata;
+	char * rawRight = rawdata;
 #endif
 
 	
@@ -1086,7 +1087,8 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 				// Absolute path
 				const int iLen = end - beg;
 				szKeep = new TCHAR[ iLen + 1 ];
-				ToTchar( szKeep, beg, iLen );
+				// XXX ToTchar( szKeep, beg, iLen );
+				memcpy( szKeep, beg, iLen * sizeof( TCHAR ) );
 				szKeep[ iLen ] = TEXT( '\0' );
 			}
 			else
@@ -1098,7 +1100,8 @@ bool Playlist::AppendPlaylistFile( TCHAR * szFilename )
 				const int iSecondLen = end - beg;
 				szKeep = new TCHAR[ iBaseDirLen + iSecondLen + 1 ];
 				memcpy( szKeep, szBaseDir, iBaseDirLen * sizeof( TCHAR ) );
-				ToTchar( szKeep + iBaseDirLen, beg, iSecondLen );
+				// XXX ToTchar( szKeep + iBaseDirLen, beg, iSecondLen );
+				memcpy( szKeep + iBaseDirLen, beg, iSecondLen* sizeof( TCHAR ) );
 				
 				szKeep[ iBaseDirLen + iSecondLen ] = _T( '\0' );
 				
@@ -1169,9 +1172,14 @@ bool Playlist::ExportPlaylistFile( TCHAR * szFilename )
 	TCHAR * szBaseDir = szFilename;
 	const int iBaseDirLen = ( int )_tcslen( szBaseDir );
 	
-	
+#ifdef UNICODE	
+	char * rawdata = new char[ ( playlist->GetMaxIndex() + 1 ) * ( MAX_PATH + 4 ) + 2 ];
+	memcpy(rawdata,	"\xFF\xFE", 2); // UTF-16-LE BOM
+	char * walk = rawdata + 2;
+#else
 	char * rawdata = new char[ ( playlist->GetMaxIndex() + 1 ) * ( MAX_PATH + 2 ) ];
 	char * walk = rawdata;
+#endif
 
 	// Write playlist to buffer
 	const int iMaxMax = playlist->GetMaxIndex();
@@ -1196,16 +1204,22 @@ bool Playlist::ExportPlaylistFile( TCHAR * szFilename )
 		
 		// Copy
 #ifdef PA_UNICODE
-		ToAnsi( walk, szTemp, iEntryLen );
+		// ToAnsi( walk, szTemp, iEntryLen );
+		memcpy( walk, szTemp, iEntryLen * 2 );
+		walk += iEntryLen * 2;
 #else
 		memcpy( walk, szTemp, iEntryLen );
-#endif
-
-		delete [] szTemp;
-		
 		walk += iEntryLen;
+#endif
+		delete [] szTemp;
+
+#ifdef UNICODE
+		memcpy( walk, L"\015\012", 4 );
+		walk += 4;
+#else
 		memcpy( walk, "\015\012", 2 );
 		walk += 2;
+#endif
 	}
 	
 	const DWORD iSizeBytes = walk - rawdata;
